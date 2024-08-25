@@ -1,0 +1,16 @@
+<nav class="blog-pagination d-flex justify-content-center">
+    <div class="pagination">
+        <span class="step-links">
+            {% if paginator_articles.has_previous %}
+            <a class="btn btn-outline-primary" href="?page={{ paginator_articles.previous_page_number }}">＜</a>
+            {% endif %}
+            <span class="m-2 current">
+                {{ paginator_articles.number }} / {{ paginator_articles.paginator.num_pages }}
+            </span>
+
+            {% if paginator_articles.has_next %}
+                <a class="btn btn-outline-primary" href="?page={{ paginator_articles.next_page_number }}">＞</a>
+            {% endif %}
+        </span>
+    </div>
+</nav>
