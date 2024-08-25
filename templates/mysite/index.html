@@ -21,7 +21,7 @@
                     <h3 class="mb-0">人気の記事</h3>
                     <div class="mb-1 text-muted">11/12</div>
                     <p class="card-text mb-auto">文章をかこう</p>
-                    <a href="#" class="stretched-link">続きを読む</a>
+                    <a href="#" class="None-stretched-link">続きを読む</a>
                 </div>
             </div>
         </div>
@@ -33,7 +33,7 @@
                     <h3 class="mb-0">人気の記事</h3>
                     <div class="mb-1 text-muted">11/12</div>
                     <p class="card-text mb-auto">文章をかこう</p>
-                    <a href="#" class="stretched-link">続きを読む</a>
+                    <a href="#" class="None-stretched-link">続きを読む</a>
                 </div>
             </div>
         </div>
@@ -46,12 +46,16 @@
             <h3 class="pb-4 font-italic border-bottom">
                 Django Lesson
             </h3>
-            <div class="blog-post">
-                <h2 class="blog-post-title">サンプル</h2>
-                <p class="blog-post-meta">2014/01/01 by 
-                    <a href="#">ふじサン</a>
-                </p>
-            </div>
+            {% for article in last_three_articles %}
+                <div class="blog-post">
+                    <h2 class="blog-post-title">{{ article.title }}</h2>
+                    <p class="blog-post-meta">{{ article.created_at }} by <a href="#">
+                        {{ article.author }}</a></p>
+                        <p>{{ article.text }}</p>
+                    <a class="None-stretched-link" href="blog/{{ article.id }}/">続きはこちら</a>
+                </div>
+                <hr>
+            {% endfor %}
             <nav class="blog-pagination">
                 <a class="btn btn-outline-primary" href="#">古い記事</a>
                 <a class="btn btn-outline-primary disabled" href="#">新しい記事</a>
