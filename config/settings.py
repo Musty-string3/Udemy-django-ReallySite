@@ -119,3 +119,24 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'mysite.User'
+
+# ログインページ
+LOGIN_URL = '/login/'
+
+LOGIN_REDIRECT_URL = '/'
+
+# ログアウトページ
+LOGOUT_URL = '/logout/'
+
+LOGOUT_REDIRECT_URL = '/login/'
+
+# --------- massage tab with bootstrap alert class ---------------------
+from django.contrib import messages
+MESSAGE_TAGS = {
+    messages.ERROR: 'rounded-0 alert alert-danger',
+    messages.WARNING: 'rounded-0 alert alert-warning',
+    messages.SUCCESS: 'rounded-0 alert alert-success',
+    messages.INFO: 'rounded-0 alert alert-info',
+    messages.DEBUG: 'rounded-0 alert alert-secondary',
+}
+# --------- massage tab with bootstrap alert class ---------------------

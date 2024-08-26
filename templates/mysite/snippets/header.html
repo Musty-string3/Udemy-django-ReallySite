@@ -12,7 +12,15 @@
         <nav class="nab d-flex justify-content-between">
             <a class="p-2 link-secondary" href="{% url 'blog:index' %}">ブログ</a>
             <a class="p-2 link-secondary" href="#">お問い合わせ</a>
-            <a class="p-2 link-secondary" href="#">メニュー</a>
+            {% if user.is_authenticated %}
+                <form action="{% url 'logout' %}" method='post'>
+                    {% csrf_token %}
+                    <button class="btn btn-outline-secondary" type="submit">ログアウト</button>
+                </form>
+            {% else %}
+                <a class="p-2 link-secondary" href="{% url 'login' %}">ログイン</a>
+                <a class="p-2 link-secondary" href="{% url 'signup' %}">サインイン</a>
+            {% endif %}
         </nav>
     </div>
 </div>
