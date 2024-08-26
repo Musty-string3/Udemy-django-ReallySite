@@ -1,0 +1,8 @@
+{% comment %} メッセージの内容 {% endcomment %}
+{% for message in messages %}
+    <nav class="py-2 {{ message.tags }}">
+        <div class="container text-center p-1">
+            {{ message }}
+        </div>
+    </nav>
+{% endfor %}

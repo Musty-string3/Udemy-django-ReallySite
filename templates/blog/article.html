@@ -13,6 +13,9 @@
                 {{ article.author }}
             </p>
             <p>{{ article.text }}</p>
+
+            <hr class="my-4">
+            {% include "mysite/snippets/comment.html" %}
         </div>
         <aside class="col-md-4">
             <div class="p-4 mb-3 bg-light rounded">
