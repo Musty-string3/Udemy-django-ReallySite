@@ -12,6 +12,7 @@
         <nav class="nab d-flex justify-content-between">
             <a class="p-2 link-secondary" href="{% url 'blog:index' %}">ブログ</a>
             <a class="p-2 link-secondary" href="#">お問い合わせ</a>
+            <a class="p-2 link-secondary" href="{% url 'mypage' %}">マイページ</a>
             {% if user.is_authenticated %}
                 <form action="{% url 'logout' %}" method='post'>
                     {% csrf_token %}

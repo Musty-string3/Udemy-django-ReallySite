@@ -1,13 +1,22 @@
-from typing import Any
 from django.http import HttpRequest
 from django.http.response import HttpResponse as HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.views import LoginView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from django.contrib import messages
 
 from blog.models import Article
 from mysite.forms import UserCreateForm
+
+
+class CustomLoginRequiredMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, 'ログインが必要です。')
+            redirect('login')
+        return super().dispatch(request, *args, **kwargs)
+
 
 def index(request):
     last_three_articles = Article.objects.all()[:3]
@@ -62,3 +71,12 @@ class Signup(View):
             user.save()
             messages.success(request, 'ユーザー登録が完了しました。')
             return redirect('/')
+
+
+class MypageView(CustomLoginRequiredMixin, View):
+    template_name = 'mysite/mypage.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {
+            
+        })
