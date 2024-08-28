@@ -3,9 +3,14 @@
     <head>
         {% include "mysite/snippets/head.html" %}
     </head>
-    <body class="vh-100 d-flex align-items-center justify-content-center bg-light">
-
-        {% block content %}{% endblock %}
+    <body>
+        <div class="message-container" style="min-height: 50px; position: fixed; width: 100%; top: 70px;">
+            {% include "mysite/snippets/messages.html" %}
+        </div>
+        </div>
+        <div class="vh-100 d-flex align-items-center justify-content-center bg-light">
+            {% block content %}{% endblock %}
+        </div>
 
     </body>
 </html>
