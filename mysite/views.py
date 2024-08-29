@@ -5,6 +5,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from django.contrib import messages
+from django.contrib.auth import login
 
 from blog.models import Article
 from mysite.forms import UserCreateForm, ProfileForm
@@ -69,8 +70,13 @@ class Signup(View):
             user = form.save(commit=False)
             # user.is_active = False
             user.save()
+            # ログインさせる
+            login(request, user)
             messages.success(request, 'ユーザー登録が完了しました。')
             return redirect('/')
+        else:
+            messages.error(request, 'ユーザー登録に失敗しました。（既に同じメールアドレスを持ったユーザーが存在します。）')
+            return redirect('signup')
 
 
 class MypageView(CustomLoginRequiredMixin, View):
@@ -87,6 +93,9 @@ class MypageView(CustomLoginRequiredMixin, View):
             profile.user = request.user
             profile.save()
             messages.success(request, 'プロフィール情報が更新されました。')
+        else:
+            messages.error(request, 'プロフィール情報が更新できませんでした。')
+            return redirect('mypage')
 
         return render(request, self.template_name, {
         })
