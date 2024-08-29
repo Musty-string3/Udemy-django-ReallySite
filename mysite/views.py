@@ -7,7 +7,7 @@ from django.views import View
 from django.contrib import messages
 
 from blog.models import Article
-from mysite.forms import UserCreateForm
+from mysite.forms import UserCreateForm, ProfileForm
 
 
 class CustomLoginRequiredMixin(LoginRequiredMixin):
@@ -78,5 +78,15 @@ class MypageView(CustomLoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {
-            
+        })
+
+    def post(self, request, *args, **kwargs):
+        profile_form = ProfileForm(request.POST)
+        if profile_form.is_valid():
+            profile = profile_form.save(commit=False)
+            profile.user = request.user
+            profile.save()
+            messages.success(request, 'プロフィール情報が更新されました。')
+
+        return render(request, self.template_name, {
         })
