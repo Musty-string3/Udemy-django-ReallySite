@@ -2,8 +2,14 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 
-from .models import User
+from .models.account_models import User
+from .models.profile_models import Profile
 from .forms import UserCreateForm
+
+
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    can_delete = False
 
 class CustomUserAdmin(UserAdmin):
     fieldsets = (
@@ -37,6 +43,10 @@ class CustomUserAdmin(UserAdmin):
     )
 
     add_form = UserCreateForm
+
+    # UserモデルとProfileモデルはOneToOneで紐付いているので
+    # 管理画面のUserモデルにプロフィールモデルを追加することができる
+    inlines = (ProfileInline, )
 
 admin.site.unregister(Group)
 admin.site.register(User, CustomUserAdmin)
