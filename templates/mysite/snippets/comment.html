@@ -1,17 +1,19 @@
 <div class="">
     <h3 class="h6">コメント</h3>
     <div class="list-group">
-        {% for comment in comments %}
+        {% for comment, time_ago in comments_with_time %}
             <div class="list-group-item list-group-item-action p3 rounded-0">
                 <p class="m-0">
-                    <small>{{ comment.comment }}</small>
+                    <small>{{ comment.user.profile.username }}</small>
                 </p>
+                <p class="m-0">{{ comment.comment }}</p>
                 <div class="m-0 d-flex">
-                    <small>作成日時{{ comment.created_at }}</small>
+                    <small>{{ time_ago }}</small>
                     {% if comment.user == request.user %}
-                        <a href="#" class="text-decoration-none text-secondary ms-3">編集する</a>
+                    <a href="#" class="text-decoration-none text-secondary ms-3">編集する</a>
                     {% endif %}
                 </div>
+                {{ comment.tex }}
             </div>
         {% endfor %}
     </div>
