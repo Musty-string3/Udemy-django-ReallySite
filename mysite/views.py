@@ -1,3 +1,5 @@
+import os
+
 from django.http import HttpRequest
 from django.http.response import HttpResponse as HttpResponse
 from django.shortcuts import render, redirect
@@ -5,6 +7,7 @@ from django.contrib.auth.views import LoginView
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth import login
+from django.core.mail import send_mail
 from django.db.models import Count
 
 from blog.models import Article, ArticleLike
@@ -95,5 +98,34 @@ class MypageView(CustomLoginRequiredMixin, View):
             messages.error(request, 'プロフィール情報が更新できませんでした。')
             return redirect('mypage')
 
+        return render(request, self.template_name, {
+        })
+
+
+class ContactView(View):
+    template_name = 'mysite/contact.html'
+
+    def get(self, request, *args, **kwargs):
+
+        return render(request, self.template_name, {
+        })
+
+    def post(self, request, *args, **kwargs):
+        print(request.POST.get)
+        # ------ email送信
+        subject = 'お問い合わせがありました。'
+        message = "お問い合わせがありました。\n\n名前: {}\nメールアドレス: {}\n内容: {}\n".format(
+            request.POST.get('name'),
+            request.POST.get('email'),
+            request.POST.get('contact'),
+        )
+        email_from = os.environ['EMAIL_HOST_USER']
+        email_to = [os.environ['EMAIL_HOST_USER'], ]
+        try:
+            send_mail(subject, message, email_from, email_to)
+            messages.success(request, 'お問い合わせメールの送信をしました。')
+        except Exception as e:
+            messages.error(request, f'メールの送信に失敗しました。エラーコード{e}')
+            return redirect('/')
         return render(request, self.template_name, {
         })

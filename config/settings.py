@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import yaml
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,6 +16,16 @@ SECRET_KEY = 'django-insecure-1ul5xe8x8(af%r6n5%3tkeb(y!_bawh39yea!4kw$b#d90$7_@
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+
+if DEBUG:
+    # """開発環境"""
+    with open(os.path.join(BASE_DIR, 'secrets', 'secret_dev.yaml')) as file:
+        objects = yaml.safe_load(file)
+        for object in objects:
+            os.environ[object] = objects[object]
+else:
+    # """本番環境"""
+    pass
 
 
 # Application definition
@@ -140,3 +151,15 @@ MESSAGE_TAGS = {
     messages.DEBUG: 'rounded-0 alert alert-secondary',
 }
 # --------- massage tab with bootstrap alert class ---------------------
+
+
+# ----------- Gmail設定 --------------
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
+EMAIL_OPERATION = os.environ['EMAIL_OPERATION']
+
+# ----------- Gmail設定 --------------
