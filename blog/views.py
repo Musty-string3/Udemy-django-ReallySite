@@ -4,12 +4,12 @@ from django.contrib import messages
 from django.views import View
 from django.db.models import Count
 
-from .models import Article, Comment, ArticleLike
+from .models import Article, Comment, ArticleLike, ArticleTag
 from .forms import CommentForm
 from common.myiste_def import *
 
 
-class ArticleIndexView(View):
+class ArticleIndexView(CustomLoginRequiredMixin, View):
     template_name = 'blog/blogs.html'
 
     def get(self, request, *args, **kwargs):
@@ -23,16 +23,18 @@ class ArticleIndexView(View):
         paginator = Paginator(articles, 3).get_page(page_number)
 
         return render(request, self.template_name, {
+            'page_title': 'ブログ一覧画面',
             'paginator_articles': paginator,
             'page_number': page_number,
         })
 
 
-class ArticleDetailView(View):
+class ArticleDetailView(CustomLoginRequiredMixin, View):
     template_name = 'blog/article.html'
 
     def get(self, request, pk, *args, **kwargs):
         article = Article.objects.get(pk=pk)
+        print(article.tags.all())
 
         comments = Comment.objects.filter(article=article)
         comments_with_time = [(comment, days_ago_comment(comment.created_at)) for comment in comments]
@@ -80,4 +82,22 @@ class ArticleDetailView(View):
             'comment_form': comment_form,
             'comments_with_time': comments_with_time,
             'like_count': like_count,
+        })
+
+
+class ArticleTagView(CustomLoginRequiredMixin, View):
+    template_name = 'blog/blogs.html'
+
+    def get(self, request, name, *args, **kwargs):
+        page_number = request.GET.get('page')
+        tag = ArticleTag.objects.get(name=name)
+        tag_obj = tag.articles.all()
+        print(tag_obj)
+
+        paginator = Paginator(tag_obj, 3).get_page(page_number)
+
+        return render(request, self.template_name, {
+            'page_title': '記事一覧 #{}'.format(name),
+            'paginator_articles': paginator,
+            'page_number': page_number,
         })
