@@ -2,11 +2,10 @@ from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.views import View
-from django.utils import timezone
-from datetime import timedelta
 
-from .models import Article, Comment
+from .models import Article, Comment, ArticleLike
 from .forms import CommentForm
+from common.myiste_def import *
 
 
 class ArticleIndexView(View):
@@ -27,29 +26,18 @@ class ArticleIndexView(View):
 
 class ArticleDetailView(View):
     template_name = 'blog/article.html'
-    def days_ago_comment(self, comment_date):
-        delta = timezone.now() - comment_date
-        days_ago = delta.days
-
-        if delta < timedelta(minutes=1):
-            return 'たった今'
-        elif delta < timedelta(hours=1):
-            return f'{delta.seconds // 60}分前'
-        elif delta < timedelta(days=1):
-            return f'{delta.hours // 24}時間前'
-        else:
-            return f'{delta.days}日前'
 
     def get(self, request, pk, *args, **kwargs):
         article = Article.objects.get(pk=pk)
+
         comments = Comment.objects.filter(article=article)
-        comments_with_time = [(comment, self.days_ago_comment(comment.created_at)) for comment in comments]
-        # self.days_ago_comment()
-        print(comments_with_time)
+        comments_with_time = [(comment, days_ago_comment(comment.created_at)) for comment in comments]
+        like_count = ArticleLike.objects.filter(article=article).count()
 
         return render(request, self.template_name, {
             'article': article,
             'comments_with_time': comments_with_time,
+            'like_count': like_count,
         })
 
     def post(self, request, pk, *args, **kwargs):
@@ -63,17 +51,28 @@ class ArticleDetailView(View):
 
         comment_form = CommentForm(request.POST)
 
-        if comment_form.is_valid():
+        if request.POST.get('like_count', None):
+            if request.POST.get('like_delete', None):
+                ArticleLike.objects.filter(user=request.user, article=article).delete()
+            elif article_like_exists(article, request.user):
+                ArticleLike.objects.create(user=request.user, article=article)
+
+        elif comment_form.is_valid():
             comment = comment_form.save(commit=False)
             comment.user = request.user
             comment.article = article
             comment.save()
+        else:
+            messages.error(request, '処理に失敗しました。')
+            return redirect('blog:detail', pk=pk)
 
         comments = Comment.objects.filter(article=article)
-        comments_with_time = [(comment, self.days_ago_comment(comment.created_at)) for comment in comments]
+        comments_with_time = [(comment, days_ago_comment(comment.created_at)) for comment in comments]
+        like_count = ArticleLike.objects.filter(article=article).count()
 
         return render(request, self.template_name, {
             'article': article,
             'comment_form': comment_form,
             'comments_with_time': comments_with_time,
+            'like_count': like_count,
         })
