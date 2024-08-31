@@ -8,6 +8,12 @@ class Article(models.Model):
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
+    class Meta:
+        verbose_name_plural = '記事'
+        db_table = 'article'
+
+    def __str__(self):
+        return self.title
 
 class Comment(models.Model):
     comment = models.TextField(verbose_name='コメント', max_length='500')
@@ -15,3 +21,24 @@ class Comment(models.Model):
     article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE)
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
+
+    class Meta:
+        verbose_name_plural = 'コメント'
+        db_table = 'comment'
+
+    def __str__(self):
+        return self.comment
+
+
+class ArticleLike(models.Model):
+    user = models.ForeignKey(get_user_model(), verbose_name='投稿者', on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='article_like')
+    created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
+
+    class Meta:
+        verbose_name_plural = 'いいね'
+        db_table = 'article_like'
+
+    def __str__(self):
+        return f'{ self.user } : {self.article}'
