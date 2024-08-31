@@ -2,31 +2,29 @@ from django.http import HttpRequest
 from django.http.response import HttpResponse as HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.views import LoginView
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth import login
+from django.db.models import Count
 
-from blog.models import Article
+from blog.models import Article, ArticleLike
 from mysite.forms import UserCreateForm, ProfileForm
+from common.myiste_def import CustomLoginRequiredMixin
 
 
-class CustomLoginRequiredMixin(LoginRequiredMixin):
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            messages.error(request, 'ログインが必要です。')
-            redirect('login')
-        return super().dispatch(request, *args, **kwargs)
+class TopView(View):
+    template_name = 'mysite/index.html'
+    def get(self, request, *args, **kwargs):
+        last_three_articles = Article.objects.all().order_by('-created_at')[:3]
+        popular_articles = Article.objects.annotate(
+            like_count=Count('article_like'),
+            comment_count=Count('comments')).order_by('-like_count')[:2]
 
-
-def index(request):
-    last_three_articles = Article.objects.all()[:3]
-    context = {
-        'title': 'Really Site',
-        'last_three_articles': last_three_articles,
-    }
-    print(context)
-    return render(request, 'mysite/index.html', context)
+        return render(request, self.template_name, {
+            'title': 'Really Site',
+            'last_three_articles': last_three_articles,
+            'popular_articles': popular_articles,
+        })
 
 
 class Login(LoginView):

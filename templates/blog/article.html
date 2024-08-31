@@ -13,22 +13,7 @@
                 {{ article.author }}
             </p>
             <p>{{ article.text }}</p>
-            <form action="{{ request.path }}" method='post'>
-                {% csrf_token %}
-                <button type='submit'>
-                    <input type="hidden" name='like_count' value='True'>
-                    {% if like_count > 0 %}
-                        <i class="bi bi-suit-heart-fill" style='color: red;'>
-                            <span>{{ like_count }}</span>
-                            <input type="hidden" name='like_delete', value='True'>
-                        </i>
-                        {% else %}
-                        <i class="bi bi-suit-heart">
-                            <span>{{ like_count }}</span>
-                        </i>
-                    {% endif %}
-                </button>
-            </form>
+            {% include "mysite/snippets/like.html" %}
 
             <hr class="my-4">
             {% include "mysite/snippets/comment.html" %}

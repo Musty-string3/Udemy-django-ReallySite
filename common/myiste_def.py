@@ -1,7 +1,19 @@
 from django.utils import timezone
 from datetime import timedelta
+from django.shortcuts import render, redirect
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
+
 
 from blog.models import ArticleLike
+
+class CustomLoginRequiredMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, 'ログインが必要です。')
+            redirect('login')
+        return super().dispatch(request, *args, **kwargs)
+
 
 def days_ago_comment(comment_date):
     delta = timezone.now() - comment_date

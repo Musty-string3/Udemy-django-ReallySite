@@ -6,7 +6,7 @@ from mysite import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name='top'),
+    path('', views.TopView.as_view(), name='top'),
     path('blog/', include('blog.urls')),
     path('signup/', views.Signup.as_view(), name='signup'),
     path('login/', views.Login.as_view(), name="login"),

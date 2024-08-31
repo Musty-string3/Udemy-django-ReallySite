@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.views import View
+from django.db.models import Count
 
 from .models import Article, Comment, ArticleLike
 from .forms import CommentForm
@@ -14,9 +15,12 @@ class ArticleIndexView(View):
     def get(self, request, *args, **kwargs):
         page_number = request.GET.get('page')
 
-        articles = Article.objects.all()
+        articles = Article.objects.annotate(
+            like_count=Count('article_like'),
+            comment_count=Count('comments'),
+        )
         # 1ページの記事の表示を変更
-        paginator = Paginator(articles, 2).get_page(page_number)
+        paginator = Paginator(articles, 3).get_page(page_number)
 
         return render(request, self.template_name, {
             'paginator_articles': paginator,
@@ -43,6 +47,7 @@ class ArticleDetailView(View):
     def post(self, request, pk, *args, **kwargs):
         # textareaのnameがrequest.POST.get('comment')に送られてくる
         request_comment = request.POST.get('comment')
+
         try:
             article = Article.objects.get(pk=pk)
         except Comment.DoesNotExist:
