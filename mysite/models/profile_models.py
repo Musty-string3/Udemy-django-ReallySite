@@ -1,6 +1,13 @@
+import os
+
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
+
+
+def upload_image_to(instance, filename):
+    user_id = str(instance.user.id)
+    return os.path.join('images', user_id, filename)
 
 
 class Profile(models.Model):
@@ -10,6 +17,7 @@ class Profile(models.Model):
     prefecture = models.CharField(verbose_name='都道府県',default='', max_length=8)
     city = models.CharField(verbose_name='市区町村', default='', max_length=100)
     address = models.CharField(verbose_name='住所', default='', max_length=200)
+    image = models.ImageField(verbose_name='プロフィール画像', upload_to=upload_image_to, default='static/mysite/IMG_1131.jpg')
 
     class Meta:
         verbose_name_plural = 'プロフィール'
