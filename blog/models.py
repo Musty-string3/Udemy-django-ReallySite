@@ -19,6 +19,9 @@ class Article(models.Model):
     text = models.TextField(verbose_name='テキスト', default='テキストです。', max_length=255, null=False, blank=False)
     author = models.ForeignKey(get_user_model(), verbose_name='作成者', on_delete=models.CASCADE)
     tags = models.ManyToManyField(ArticleTag, verbose_name='タグ', related_name='articles')
+    is_public = models.BooleanField(verbose_name='公開', default=False)
+    sell_flag = models.BooleanField(verbose_name='記事を販売', default=False)
+    price = models.IntegerField(verbose_name='価格', default=0)
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
