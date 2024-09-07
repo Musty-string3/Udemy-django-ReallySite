@@ -36,19 +36,27 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
 
 
 class ArticleNewView(CustomLoginRequiredMixin, View):
-    template_name = 'mysite/new.html'
+    template_name = 'mysite/blog_new.html'
 
     def get(self, request, *args, **kwargs):
-        article_new_form = ArticleNewForm()
-        
-
-        return render(request, self.template_name, {
-            
-        })
+        return render(request, self.template_name, {})
 
     def post(self, request, *args, **kwargs):
+        article_new_form = ArticleNewForm(request.POST)
+        print('request.POST.get', request.POST.get)
+
+        if article_new_form.is_valid():
+            # forms.pyの中でタグの設定などの処理を行う
+            form = article_new_form.save(request.user, commit=False)
+            form.save()
+
+            messages.success(request, '記事を作成しました。')
+            return redirect('blog:detail', form.id)
+        else:
+            messages.error(request, f'記事の作成に失敗しました。{request.POST.get}')
+
         return render(request, self.template_name, {
-            
+            'article_new_form': article_new_form,
         })
 
 

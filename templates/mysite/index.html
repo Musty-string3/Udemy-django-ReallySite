@@ -57,7 +57,7 @@
             {% endfor %}
             <nav class="blog-pagination">
                 <a class="btn btn-outline-primary" href="{{ blog_index }}">ブログ一覧はこちら</a>
-                <a class="btn btn-outline-primary disabled" href="#">新しい記事</a>
+                <a class="btn btn-outline-primary" href="{% url 'blog:new' %}">新しい記事</a>
             </nav>
         </div>
         {% comment %} サイドバー {% endcomment %}
