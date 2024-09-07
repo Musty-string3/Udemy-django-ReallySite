@@ -1,4 +1,4 @@
-<form action="{% url 'blog:detail' article.id %}" method='post'>
+{% comment %} <form action="{% url 'blog:detail' article.id %}" method='post'>
     {% csrf_token %}
     <button type='submit'>
         <input type="hidden" name='like_count' value='True'>
@@ -13,4 +13,90 @@
             </i>
         {% endif %}
     </button>
-</form>
+</form> {% endcomment %}
+
+<div class="d-inline my-1">
+    <button type='button' id='like_btn' class="btn btn-outline-danger">
+        {% if like_count > 0 %}
+            <i class="bi bi-suit-heart-fill text-danger" id="like-for-post-icon"></i>
+        {% else %}
+            <i class="bi bi-suit-heart" id="like-for-post-icon"></i>
+        {% endif %}
+        <span id="like_count">{{ like_count }}件のいいね</span>
+    </button>
+</div>
+
+<script>
+    // ページの内容が扱えるようになったら
+    window.addEventListener("DOMContentLoaded", (e) => {
+
+        var likeBtn = document.getElementById('like_btn');
+
+        // いいねボタンがクリックされたら
+        likeBtn.addEventListener('click', (e) => {
+            // 送信先URL
+            // var url = "blog/{{ article.id }}/like";
+            var url = "{% url 'blog:like_detail' article.id %}";
+            // csrf_tokenの取得
+            var csrfToken = getCookie("csrftoken")
+            // 送信したいデータ
+            var data = {
+                article_pk: "{{ article.id }}",
+            }
+
+            // 送信機能
+            fetch(url, {
+                method: "POST",
+                credentials: 'same-origin',
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRFToken": csrfToken,
+                },
+                body: JSON.stringify(data),
+            })
+            // viewsから送られてくるJsonResponseを受け取る
+            // Response => Response.json()でJSONにする
+            .then(Response => Response.json())
+            .then(data => {
+                if (data["message"] == "success") {
+                    console.log(Response);
+                    var LikeCount = document.getElementById("like_count");
+                    var icon = document.getElementById('like-for-post-icon')
+
+                    // いいねの数を上書き
+                    LikeCount.textContent = data['like_count'] + '件のいいね'
+                    if (data["method"] == "create") {
+                        icon.classList.remove('bi-suit-heart');
+                        icon.classList.add('bi-suit-heart-fill', 'text-danger');
+                    } else {
+                        icon.classList.remove('bi-suit-heart-fill', 'text-danger');
+                        icon.classList.add('bi-suit-heart');
+                    }
+                    icon.id = 'like-for-post-icon'
+                }else {
+                    console.log('errorです。')
+                }
+            })
+            // エラーが発生したら
+            .catch((error) => {
+                console.log(error)
+            });
+
+        }, false);
+    }, false);
+
+// cookieのキーがあれば取得
+// 指定した名前 (name) のクッキーを探し、その値をデコードして返す
+function getCookie(name) {
+    if (document.cookie && document.cookie != "") {
+        for (var cookie of document.cookie.split(';')) {
+            var [key, value] = cookie.trim().split("=");
+            if (key == name) {
+                return decodeURIComponent(value);
+            }
+        }
+    }
+}
+
+</script>
