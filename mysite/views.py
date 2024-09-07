@@ -1,5 +1,7 @@
 import os
+import payjp
 
+from django.utils import timezone
 from django.http import HttpRequest
 from django.http.response import HttpResponse as HttpResponse
 from django.shortcuts import render, redirect
@@ -9,10 +11,13 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.core.mail import send_mail
 from django.db.models import Count
+# キャッシュ
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 from blog.models import Article, ArticleLike
 from mysite.forms import UserCreateForm, ProfileForm
-from common.myiste_def import CustomLoginRequiredMixin
+from common.myiste_def import CustomLoginRequiredMixin, prime_factorize
 
 
 class TopView(View):
@@ -88,7 +93,9 @@ class MypageView(CustomLoginRequiredMixin, View):
         })
 
     def post(self, request, *args, **kwargs):
-        profile_form = ProfileForm(request.POST)
+        print(request.FILES)
+        print(request.POST)
+        profile_form = ProfileForm(request.POST, request.FILES)
         if profile_form.is_valid():
             profile = profile_form.save(commit=False)
             profile.user = request.user
@@ -128,4 +135,51 @@ class ContactView(View):
             messages.error(request, f'メールの送信に失敗しました。エラーコード{e}')
             return redirect('/')
         return render(request, self.template_name, {
+        })
+
+
+class PayView(CustomLoginRequiredMixin, View):
+    template_name = 'mysite/pay.html'
+    payjp.api_key = os.environ['PAYJP_SECRET_KEY']
+    public_key = os.environ['PAYJP_PUBLIC_KEY']
+    amount = 1000
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {
+            'amount': self.amount,
+            'public_key': self.public_key,
+        })
+
+    def post(self, request, *args, **kwargs):
+        print(request.POST.get)
+        # 作成されたトークンをもとに作成されたのは誰かを判定して作成する
+        customer = payjp.Customer.create(
+            email = 'example@pay.jp',
+            card = request.POST.get('payjp-token'),
+        )
+        # 支払いを行う
+        charge = payjp.Charge.create(
+            amount = self.amount,
+            currency = 'jpy', #通貨のこと
+            customer = customer.id,
+            description = '決済テスト',
+        )
+        return render(request, self.template_name, {
+            'amount': self.amount,
+            'public_key': self.public_key,
+            'charge': charge,
+            'card': request.POST.get('payjp-token'),
+        })
+
+# @method_decorator(cache_page(30), name='dispatch')
+# @method_decoratorを使って、cache_pageデコレータをdispatchメソッドに適用
+class CacheTestView(CustomLoginRequiredMixin, View):
+    template_name = 'mysite/cache_test.html'
+
+    def get(self, request, *args, **kwargs):
+        name = request.GET.get('name', None)
+        return render(request, self.template_name, {
+            'answer': prime_factorize(9867280421310721),
+            'time': timezone.now(),
+            'name': name,
         })

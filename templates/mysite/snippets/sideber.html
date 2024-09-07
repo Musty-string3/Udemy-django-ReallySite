@@ -1,4 +1,7 @@
 {% load static %}
+{% load cache %}
+
+{% cache 86400 siedbar %}
 
 <aside class="col-md-4">
     <div class="p-4 mb-3 bg-light rounded">
@@ -22,3 +25,5 @@
         </figcaption>
     </figure>
 </aside>
+
+{% endcache  %}

@@ -1,10 +1,13 @@
 {% extends "mysite/base.html" %}
+{% load cache %}
 
 {% block content %}
 
 <main class="container">
     <div class="row">
         <div class="col-md-8">
+
+            {% cache 86400 article article.id %}
             <h3 class="pb-4 display-5 font-italic">
                 {{ article.title }}
             </h3>
@@ -13,6 +16,7 @@
                 {{ article.author }}
             </p>
             <p>{{ article.text }}</p>
+            {% endcache %}
             {% include "mysite/snippets/like.html" %}
             <div class="mt-2 me-2">
                 {% for tag in article.tags.all %}

@@ -1,0 +1,27 @@
+{% extends 'mysite/base.html' %}
+
+{% block content %}
+
+{% load cache %}
+
+<main class="container">
+    <div class="row">
+        <h3 class="pb-4 mb-4 font-italic border-bottom">
+            キャッシュテスト
+        </h3>
+        <p>結果：キャッシュなし</p>
+        <p>{{ answer }}</p>
+        <p>{{ time|date:"Y-m-d H:i:s" }}</p>
+        <p>{{ time|date:"Y-m-d H:i:s" }}</p>
+        <p>結果：キャッシュあり</p>
+        {% comment %} それぞれのユーザーごとにアクセスしたキャッシュを保存する {% endcomment %}
+        {% cache 60 first_cache request.user %}
+        {% comment %} この中にキャッシュしたい内容を書き込む {% endcomment %}
+        <p>{{ answer }}</p>
+        <p>{{ time|date:"Y-m-d H:i:s" }}</p>
+        {% endcache %}
+
+    </div>
+</main>
+
+{% endblock %}
