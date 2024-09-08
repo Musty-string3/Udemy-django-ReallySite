@@ -14,8 +14,14 @@
             <p class="small text-muted text-right">
                 {{ article.created_at }}
                 {{ article.author }}
+                {% if article.is_public %}
+                    公開中
+                {% else %}
+                    非公開中
+                {% endif %}
                 {% if request.user == article.author %}
                 <a href="{% url 'blog:edit' article.id %}" class="btn btn-info">編集</a>
+                <a href="{% url 'blog:delete' article.id %}" class="btn btn-danger ms-3" onclick="return delete_article_alert(this);">削除</a>
                 {% endif %}
             </p>
             <p>{{ article.text }}</p>
@@ -27,6 +33,13 @@
                         <i class="bi bi-tag"></i>{{ tag.name }}
                     </a>
                 {% endfor %}
+            </div>
+            <div class="mt-3 small text-muted">
+                {% if article.sell_flag and article.price != 0 %}
+                記事を販売中：価格{{ article.price }}円
+                {% else %}
+                無料
+                {% endif %}
             </div>
 
             <hr class="my-4">
@@ -45,5 +58,11 @@
 
     </div>
 </main>
+
+<script>
+    function delete_article_alert(node) {
+        return confirm('記事を削除してもよろしいでしょうか？');
+    }
+</script>
 
 {% endblock %}

@@ -24,9 +24,51 @@
                     <div id="tagsHelp" class="form-text">カンマ区切りでタグを入力してください</div>
                 </div>
 
+                <div class="mb-3 form-check">
+                    <input type="hidden" name='is_public' value=false>
+                    <input type="checkbox" class="form-check-input" id="IsPpublicCheck" name='is_public' value="1" {% if article_is_public %}checked{% else %}off{% endif %}>
+                    <label class="form-check-label" for="IsPpublicCheck">公開しますか？</label>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="hidden" name='sell_flag' value=false>
+                    <input type="checkbox" class="form-check-input" id="SellFlagCheck" name='sell_flag' value="1" {% if article_sell_flag %}checked{% endif %}>
+                    <label class="form-check-label" for="SellFlagCheck">記事を有料コンテンツ化しますか？</label>
+                </div>
+
+                <div class="mb-3" id="priceInputContainer" style="display: none;">
+                    <label for="InputPrice" class="form-label">金額</label>
+                    <input type="text" name="price" class="form-control" id="InputPrice" placeholder="金額" value="{{ article_price }}" aria-describedby="priceHelp">
+                    <div id="priceHelp" class="form-text">500円の場合は「500」と入力</div>
+                </div>
+
                 <button type="submit" class="btn btn-primary">保存</button>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sellFlagCheck = document.getElementById('SellFlagCheck');
+        const priceInputContainer = document.getElementById('priceInputContainer');
+        const priceInput = document.getElementById('InputPrice');
+
+        function togglePriceInput() {
+            if (sellFlagCheck.checked) {
+                priceInputContainer.style.display = 'block';
+                priceInput.required = true;
+            } else {
+                priceInputContainer.style.display = 'none';
+                priceInput.value = 0;
+                priceInput.required = false;
+            }
+        }
+
+        sellFlagCheck.addEventListener('change', togglePriceInput);
+
+        // 初期状態を設定（ページ読み込み時やフォーム編集時に使用）
+        togglePriceInput();
+    });
+    </script>
 {% endblock %}

@@ -21,7 +21,16 @@
                             <i class="ms-1 bi bi-chat-left-dots mb-2 me-1"></i>
                             {{ article.comment_count }}
                         </div>
-                    <a class="None-stretched-link" href="/blog/{{ article.id }}/">続きはこちら</a>
+                        <div class="small text-muted">
+                            {% if article.sell_flag and article.price != 0 %}
+                            記事を販売中：価格{{ article.price }}円
+                            {% endif %}
+                        </div>
+                    {% if article.sell_flag and article.price != 0 and not article.author == request.user %}
+                    <a class="None-stretched-link" href="#">記事を購入する</a>
+                    {% else %}
+                    <a class="None-stretched-link" href="{% url 'blog:detail' article.id %}">続きはこちら</a>
+                    {% endif %}
                 </div>
                 <hr>
             {% endfor %}
