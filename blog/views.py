@@ -39,7 +39,9 @@ class ArticleNewView(CustomLoginRequiredMixin, View):
     template_name = 'mysite/blog_new.html'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {})
+        return render(request, self.template_name, {
+            'title': '新規ブログ作成',
+        })
 
     def post(self, request, *args, **kwargs):
         article_new_form = ArticleNewForm(request.POST)
@@ -57,6 +59,45 @@ class ArticleNewView(CustomLoginRequiredMixin, View):
 
         return render(request, self.template_name, {
             'article_new_form': article_new_form,
+        })
+
+
+class ArticleEditView(CustomLoginRequiredMixin, View):
+    template_name = 'mysite/blog_new.html'
+
+    def get(self, request, pk, *args, **kwargs):
+        article = Article.objects.get(pk=pk)
+        tag_list = article.tags.all()
+        tag_string = '、'.join([tag.name for tag in tag_list])
+
+        return render(request, self.template_name, {
+            'title': 'ブログ編集',
+            'article_title': article.title,
+            'article_text': article.text,
+            'tags': tag_string,
+        })
+
+    def post(self, request, pk, *args, **kwargs):
+        article = Article.objects.get(pk=pk)
+        article_new_form = ArticleNewForm(request.POST)
+
+        if article_new_form.is_valid():
+            # forms.pyの中でタグの設定などの処理を行う
+            form = article_new_form.save(request.user, commit=False)
+            form.save()
+
+            messages.success(request, '記事を作成しました。')
+            return redirect('blog:detail', form.id)
+        else:
+            article_new_form = ArticleNewForm(instance=article)
+            tags = request.POST.get('tags')
+            messages.error(request, '記事の作成に失敗しました。')
+
+        return render(request, self.template_name, {
+            'article_new_form': article_new_form,
+            'article_title': article_new_form['title'].initial,
+            'article_text': article_new_form['text'].initial,
+            'tags': tags,
         })
 
 

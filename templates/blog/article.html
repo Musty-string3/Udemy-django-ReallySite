@@ -7,16 +7,19 @@
     <div class="row">
         <div class="col-md-8">
 
-            {% cache 86400 article article.id %}
+            {% comment %} {% cache 86400 article article.id %} {% endcomment %}
             <h3 class="pb-4 display-5 font-italic">
                 {{ article.title }}
             </h3>
             <p class="small text-muted text-right">
                 {{ article.created_at }}
                 {{ article.author }}
+                {% if request.user == article.author %}
+                <a href="{% url 'blog:edit' article.id %}" class="btn btn-info">編集</a>
+                {% endif %}
             </p>
             <p>{{ article.text }}</p>
-            {% endcache %}
+            {% comment %} {% endcache %} {% endcomment %}
             {% include "mysite/snippets/like.html" %}
             <div class="mt-2 me-2">
                 {% for tag in article.tags.all %}

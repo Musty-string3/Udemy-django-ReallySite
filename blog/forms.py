@@ -26,7 +26,7 @@ class ArticleNewForm(forms.ModelForm):
         tags = self.cleaned_data['tags']
 
         # カンマで区切られたタグをリストに変換
-        tag_list = [tag.strip() for tag in tags.split(',') if tag.strip()]
+        tag_list = [tag.strip() for tag in tags.split('、') if tag.strip()]
 
         # 処理が終わったらself.cleaned_data['tags']に自動的に入れてくれる
         return tag_list

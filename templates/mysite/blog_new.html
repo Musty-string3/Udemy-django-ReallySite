@@ -3,23 +3,24 @@
 {% block content %}
 <div class="container">
     <div class="row">
+        <h3 class="text-center">{{ title }}</h3>
         <div class="col-10 m-auto">
             <form action="{{ request.path }}" method="post">
                 {% csrf_token %}
                 {{ article_new_form.errors }}
                 <div class="mb-3">
                     <label for="InputTitle" class="form-label">タイトル</label>
-                    <input type="text" name="title" class="form-control" id="InputTitle" placeholder="タイトル" required autofocus>
+                    <input type="text" name="title" class="form-control" id="InputTitle" placeholder="タイトル" value="{{ article_title }}" required autofocus>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">テキスト</label>
-                    <textarea class="form-control" id='id_text' name="text" rows='4'></textarea>
+                    <textarea class="form-control" id='id_text' name="text" rows='4' required>{{ article_text|default:'' }}</textarea>
                 </div>
 
                 <div class="mb-3">
                     <label for="InputTags" class="form-label">タグ</label>
-                    <input type="text" name="tags" class="form-control" id="InputTags" aria-describedby="tagsHelp" placeholder="タグ">
+                    <input type="text" name="tags" class="form-control" id="InputTags" aria-describedby="tagsHelp" placeholder="タグ" value="{{ tags }}">
                     <div id="tagsHelp" class="form-text">カンマ区切りでタグを入力してください</div>
                 </div>
 
