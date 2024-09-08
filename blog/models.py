@@ -59,3 +59,30 @@ class ArticleLike(models.Model):
 
     def __str__(self):
         return f'{ self.user } : {self.article}'
+
+
+class Order(models.Model):
+
+    CHARGE_TYPE = (
+        (0, '課金なし'),
+        (1, 'クレジットカード決済'),
+    )
+
+    ORDER_STATUS = (
+        (0, '決済未登録'),
+        (1, '決済完了'),
+        (2, '決済失敗'),
+        (200, '決済取り消し'),
+    )
+
+    user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE)
+    price = models.IntegerField(verbose_name='価格', blank=True, null=True)
+    charge_type = models.SmallIntegerField(verbose_name='課金タイプ', choices=CHARGE_TYPE, default=1)
+    order_status = models.SmallIntegerField(verbose_name='決済ステータス', default=1)
+    created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
+
+    class Meta:
+        verbose_name_plural = 'ユーザー注文履歴'
+        db_table = 'order'
