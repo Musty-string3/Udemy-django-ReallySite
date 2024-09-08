@@ -10,4 +10,6 @@ urlpatterns = [
     path('<int:pk>/delete/', views.ArticleDeleteView.as_view(), name='delete'),
     path('tags/<str:name>/', views.ArticleTagView.as_view(), name='tag_detail'),
     path('<int:pk>/like/', views.ArticleLikeView.as_view(), name='like_detail'),
+    path('cart/', views.ArticleInCartView.as_view(), name='cart'),
+    path('purchase/', views.ArticlePurchaseView.as_view(), name='purchase'),
 ]

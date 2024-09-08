@@ -1,4 +1,6 @@
+import os
 import json
+import payjp
 
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
@@ -6,7 +8,7 @@ from django.contrib import messages
 from django.views import View
 from django.db.models import Count
 
-from .models import Article, Comment, ArticleLike, ArticleTag
+from .models import *
 from .forms import CommentForm, ArticleNewForm
 from common.myiste_def import *
 
@@ -28,10 +30,17 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
         # 1ページの記事の表示を変更
         paginator = Paginator(articles, 3).get_page(page_number)
 
+        # 決済未完了のorderを取得
+        orders = Order.objects.filter(user=request.user, order_status=0)
+
+        # タプルの内容をflat=Trueでリスト形式に変更
+        purchased_article_ids = orders.values_list('article_id', flat=True)
+
         return render(request, self.template_name, {
             'page_title': 'ブログ一覧画面',
             'paginator_articles': paginator,
             'page_number': page_number,
+            'purchased_article_ids': purchased_article_ids,
         })
 
 
@@ -151,7 +160,7 @@ class ArticleDetailView(CustomLoginRequiredMixin, View):
             comment.save()
         else:
             messages.error(request, '処理に失敗しました。')
-            return redirect('blog:detail', pk=pk)
+            return redirect('blog:detail', pk)
 
         comments = Comment.objects.filter(article=article)
         comments_with_time = [(comment, days_ago_comment(comment.created_at)) for comment in comments]
@@ -231,3 +240,98 @@ class ArticleLikeView(CustomLoginRequiredMixin, View):
             pass
 
         return JsonResponse(context)
+
+
+class ArticleInCartView(CustomLoginRequiredMixin, View):
+    # カートに入れるを選択するとorderが作成され、カートから外すを選択でorderを削除する処理
+
+    def get(self, request, *args, **kwargs):
+        article_id = request.GET.get('article_id')
+        delete = request.GET.get('delete', None)
+
+        if delete:
+            try:
+                orders = Order.objects.filter(user=request.user, article=article_id, charge_type=0)
+                orders.delete()
+            except Order.DoesNotExist as e:
+                messages.error(request, f'商品をカートから外す処理に失敗しました。{e}')
+            return redirect('blog:index')
+        else:
+            try:
+                article = Article.objects.get(pk=article_id)
+            except Article.DoesNotExist:
+                messages.error(request, '記事の取得に失敗しました。')
+                return redirect('blog:index')
+
+            order = Order.objects.create(
+                user=request.user,
+                article=article,
+                price=article.price,
+                charge_type=0,
+                order_status=0,
+            )
+            return redirect('blog:index')
+
+    def post(self, request, *args, **kwargs):
+        print(request.POST.get)
+        # 作成されたトークンをもとに作成されたのは誰かを判定して作成する
+        customer = payjp.Customer.create(
+            email = 'example@pay.jp',
+            card = request.POST.get('payjp-token'),
+        )
+        # 支払いを行う
+        charge = payjp.Charge.create(
+            amount = self.amount,
+            currency = 'jpy', #通貨のこと
+            customer = customer.id,
+            description = '決済テスト',
+        )
+        return render(request, self.template_name, {
+            'amount': self.amount,
+            'public_key': self.public_key,
+            'charge': charge,
+            'card': request.POST.get('payjp-token'),
+        })
+
+
+class ArticlePurchaseView(CustomLoginRequiredMixin, View):
+    # Orderの決済未登録を取得して表示させる
+    # 購入できたらUserItemにデータを作成する
+
+    template_name = 'mysite/article_purchase.html'
+    payjp.api_key = os.environ['PAYJP_SECRET_KEY']
+    public_key = os.environ['PAYJP_PUBLIC_KEY']
+
+    def get(self, request, *args, **kwargs):
+        article_id = request.GET.get('article_id')
+        print(article_id)
+        try:
+            aritcle = Article.objects.get(pk=article_id)
+        except Article.DoesNotExist:
+            messages.error(request, '記事の取得に失敗しました。')
+        return render(request, self.template_name, {
+            'amount': self.amount,
+            'public_key': self.public_key,
+        })
+
+    # 購入した直後の処理
+    def post(self, request, *args, **kwargs):
+        print(request.POST.get)
+        # 作成されたトークンをもとに作成されたのは誰かを判定して作成する
+        customer = payjp.Customer.create(
+            email = 'example@pay.jp',
+            card = request.POST.get('payjp-token'),
+        )
+        # 支払いを行う
+        charge = payjp.Charge.create(
+            amount = self.amount,
+            currency = 'jpy', #通貨のこと
+            customer = customer.id,
+            description = '決済テスト',
+        )
+        return render(request, self.template_name, {
+            'amount': self.amount,
+            'public_key': self.public_key,
+            'charge': charge,
+            'card': request.POST.get('payjp-token'),
+        })

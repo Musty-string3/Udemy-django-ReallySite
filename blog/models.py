@@ -1,6 +1,11 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
+CHARGE_TYPE = (
+    (0, '課金なし'),
+    (1, 'クレジットカード決済'),
+)
+
 class ArticleTag(models.Model):
     slug = models.CharField(verbose_name='SLUG', unique=True, max_length=20, primary_key=True)
     name = models.CharField(verbose_name='タグ名', unique=True, max_length=20)
@@ -63,11 +68,6 @@ class ArticleLike(models.Model):
 
 class Order(models.Model):
 
-    CHARGE_TYPE = (
-        (0, '課金なし'),
-        (1, 'クレジットカード決済'),
-    )
-
     ORDER_STATUS = (
         (0, '決済未登録'),
         (1, '決済完了'),
@@ -76,13 +76,26 @@ class Order(models.Model):
     )
 
     user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE)
-    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='order')
     price = models.IntegerField(verbose_name='価格', blank=True, null=True)
     charge_type = models.SmallIntegerField(verbose_name='課金タイプ', choices=CHARGE_TYPE, default=1)
-    order_status = models.SmallIntegerField(verbose_name='決済ステータス', default=1)
+    order_status = models.SmallIntegerField(verbose_name='決済ステータス', choices=ORDER_STATUS, default=1)
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
     class Meta:
         verbose_name_plural = 'ユーザー注文履歴'
         db_table = 'order'
+
+
+class UserItem(models.Model):
+    user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE, related_name='user_item')
+    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='user_item')
+    charge_type = models.SmallIntegerField(verbose_name='課金タイプ', choices=CHARGE_TYPE, default=1)
+    created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
+
+    class Meta():
+        verbose_name_plural = 'ユーザー購入商品'
+        unique_together = ('user', 'article')
+        db_table = 'user_item'

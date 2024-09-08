@@ -13,21 +13,29 @@
                 <div class="blog-post">
                     <h2 class="blog-post-title">{{ article.title }}</h2>
                     <p class="blog-post-meta">{{ article.created_at }} by <a href="#">
-                        {{ article.author }}</a></p>
-                        <div class="d-flex">
-                            {{ article.text }}
-                            <i class="bi bi-suit-heart mb-1 me-1"></i>
-                            {{ article.like_count }}
-                            <i class="ms-1 bi bi-chat-left-dots mb-2 me-1"></i>
-                            {{ article.comment_count }}
-                        </div>
-                        <div class="small text-muted">
-                            {% if article.sell_flag and article.price != 0 %}
-                            記事を販売中：価格{{ article.price }}円
-                            {% endif %}
-                        </div>
+                        {{ article.author }}</a>
+                    </p>
+                    <p>{{ article.text|truncatechars:30 }}</p>
+                    <div class="d-flex">
+                        <i class="bi bi-suit-heart mb-1 me-1"></i>
+                        {{ article.like_count }}
+                        <i class="ms-1 bi bi-chat-left-dots mb-2 me-1"></i>
+                        {{ article.comment_count }}
+                    </div>
+                    <div class="small text-muted">
+                        {% if article.sell_flag and article.price != 0 %}
+                        記事を販売中：価格{{ article.price }}円
+                        {% endif %}
+                    </div>
                     {% if article.sell_flag and article.price != 0 and not article.author == request.user %}
-                    <a class="None-stretched-link" href="#">記事を購入する</a>
+                        {% if article.id in purchased_article_ids %}
+                        <a href="{% url 'blog:cart' %}?article_id={{ article.id }}&delete=True" type="button" class="btn btn-primary">カートから外す</a>
+                        {% else %}
+                        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
+                            カートにいれる
+                        </button>
+                        {% endif %}
+                    {% include "mysite/snippets/modal_purchase.html" %}
                     {% else %}
                     <a class="None-stretched-link" href="{% url 'blog:detail' article.id %}">続きはこちら</a>
                     {% endif %}

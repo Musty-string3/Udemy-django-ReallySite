@@ -1,0 +1,33 @@
+<!-- Modal -->
+<div class="modal fade" id="purchaseModal{{ article.pk }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">記事の購入</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <span class="mb-1">記事名</span>
+                    <h5 class="blog-post-title ms-2">{{ article.title }}</h5>
+                </div>
+                <div class="row mb-3">
+                    <span class="mb-1">記事のテキスト</span>
+                    <span class="blog-post-title ms-2">{{ article.text|truncatechars:20 }}（全{{ article.text|length }}文字）</span>
+                </div>
+                <div class="row mb-3">
+                    <span class="mb-1">価格</span>
+                    <span class="blog-post-title ms-2">￥{{ article.price }}円</span>
+                </div>
+                <div class="row mb-3 small text-muted">
+                    <span class="blog-post-meta">作成日時：{{ article.created_at }}</span>
+                    <span class="blog-post-meta">最終更新日時：{{ article.updated_at }}</span>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-evenly">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">戻る</button>
+                <a href="{% url 'blog:cart' %}?article_id={{ article.id }}" type="button" class="btn btn-primary">カートに入れる</a>
+            </div>
+        </div>
+    </div>
+</div>
