@@ -1,0 +1,70 @@
+{% extends "mysite/base.html" %}
+
+{% block content %}
+
+<main class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <h3 class="pb-4 font-italic border-bottom">
+                商品購入ページ
+            </h3>
+
+            <div class="row">
+                <div class="col-10">
+                    {% if orders %}
+                        {% for order in orders %}
+                        <div class="d-flex">
+                            <h4>購入商品{{ order }}</h4>
+                            <small>4242 4242 4242 4242</small>
+                        </div>
+                        <div class="row mt-2">
+                            <small>タイトル</small>
+                            <span class="ms-2 mt-1">{{ order.article.title }}</span>
+                        </div>
+                        <div class="row mt-2">
+                            <small>テキスト</small>
+                            <span class="ms-2 mt-1">テキスト数 {{ order.article.text|length }}文字</span>
+                        </div>
+                        <div class="row mt-2">
+                            <small>価格</small>
+                            <span class="ms-2 mt-1">￥{{ order.article.price }}</span>
+                        </div>
+                        <hr>
+                        {% endfor %}
+                        <h5>合計金額</h5>
+                        <h5>￥{{ total_price }}円</h5>
+                    {% else %}
+                        <p>現在カートに商品はありません。</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if customer %}
+            <p>こちらのカード情報で決済を実行しました。</p>
+            <div class="row mt-2">
+                <span>ブランド</span>
+                <h5>{{ charge.card.brand }}</h5>
+            </div>
+
+            <div class="row mt-2">
+                <span>クレジットカード情報</span>
+                <h5>****-****-****-{{ charge.card.last4 }}</h5>
+            </div>
+            {% endif %}
+
+            {% if orders %}
+            <form action="" method='post'>
+                {% csrf_token %}
+                <input type="hidden" name='total_price' value={{ total_price }}>
+
+                <script type='text/javascript' src="https://checkout.pay.jp" class="payjp-button" data-key="{{ public_key }}"></script>
+            </form>
+            {% endif %}
+
+        </div>
+        {% comment %} サイドバー {% endcomment %}
+        {% include "mysite/snippets/sideber.html" %}
+    </div>
+</main>
+
+{% endblock %}

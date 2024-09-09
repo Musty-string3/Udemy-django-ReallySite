@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.views import View
-from django.db.models import Count
+from django.db.models import Count, Sum
 
 from .models import *
 from .forms import CommentForm, ArticleNewForm
@@ -246,6 +246,7 @@ class ArticleInCartView(CustomLoginRequiredMixin, View):
     # カートに入れるを選択するとorderが作成され、カートから外すを選択でorderを削除する処理
 
     def get(self, request, *args, **kwargs):
+        # TODO:非同期処理にする
         article_id = request.GET.get('article_id')
         delete = request.GET.get('delete', None)
 
@@ -272,27 +273,6 @@ class ArticleInCartView(CustomLoginRequiredMixin, View):
             )
             return redirect('blog:index')
 
-    def post(self, request, *args, **kwargs):
-        print(request.POST.get)
-        # 作成されたトークンをもとに作成されたのは誰かを判定して作成する
-        customer = payjp.Customer.create(
-            email = 'example@pay.jp',
-            card = request.POST.get('payjp-token'),
-        )
-        # 支払いを行う
-        charge = payjp.Charge.create(
-            amount = self.amount,
-            currency = 'jpy', #通貨のこと
-            customer = customer.id,
-            description = '決済テスト',
-        )
-        return render(request, self.template_name, {
-            'amount': self.amount,
-            'public_key': self.public_key,
-            'charge': charge,
-            'card': request.POST.get('payjp-token'),
-        })
-
 
 class ArticlePurchaseView(CustomLoginRequiredMixin, View):
     # Orderの決済未登録を取得して表示させる
@@ -303,35 +283,82 @@ class ArticlePurchaseView(CustomLoginRequiredMixin, View):
     public_key = os.environ['PAYJP_PUBLIC_KEY']
 
     def get(self, request, *args, **kwargs):
-        article_id = request.GET.get('article_id')
-        print(article_id)
-        try:
-            aritcle = Article.objects.get(pk=article_id)
-        except Article.DoesNotExist:
-            messages.error(request, '記事の取得に失敗しました。')
+        print(request.user.email)
+        orders = Order.objects.select_related('article').filter(user=request.user, charge_type=0, order_status=0)
+        # ! ordersのクエリセットに対してaggregateメソッドは、辞書型の結果を返す。
+        total_price = orders.aggregate(total_price=Sum('price'))['total_price']
+
         return render(request, self.template_name, {
-            'amount': self.amount,
             'public_key': self.public_key,
+            'orders': orders,
+            'total_price': total_price,
         })
 
     # 購入した直後の処理
     def post(self, request, *args, **kwargs):
-        print(request.POST.get)
-        # 作成されたトークンをもとに作成されたのは誰かを判定して作成する
-        customer = payjp.Customer.create(
-            email = 'example@pay.jp',
-            card = request.POST.get('payjp-token'),
-        )
-        # 支払いを行う
-        charge = payjp.Charge.create(
-            amount = self.amount,
-            currency = 'jpy', #通貨のこと
-            customer = customer.id,
-            description = '決済テスト',
-        )
-        return render(request, self.template_name, {
-            'amount': self.amount,
-            'public_key': self.public_key,
-            'charge': charge,
-            'card': request.POST.get('payjp-token'),
-        })
+        orders = Order.objects.filter(user=request.user, charge_type=0, order_status=0)
+        total_price = int(request.POST.get('total_price'))
+        articles = [order.article for order in orders]
+        payjp_token = request.POST.get('payjp-token')
+
+        # UserItemが存在していたらMultipleObjectsReturnedエラーを返す
+        print('UserItemが存在するかの確認')
+        for article in articles:
+            user_items = UserItem.objects.filter(user=request.user, article=article)
+            if user_items.count() > 1:
+                messages.error(request, 'ユーザーのアイテムが複数存在しています。')
+                return redirect('blog:purchase')
+            elif user_items.exists():
+                messages.error(request, 'すでに購入しています。')
+                return redirect('blog:purchase')
+        print('UserItemは存在しないことが発覚')
+
+        try:
+            # 作成されたトークンをもとに作成されたのは誰かを判定して作成する
+            print('作成されたトークンをもとに誰かを判定開始')
+            customer = payjp.Customer.create(
+                email = 'example@pay.jp',
+                card = payjp_token,
+            )
+            print('ユーザー情報の作成が完了')
+
+            # 登録したカードが決済に有効かどうか？
+            if customer['cards']['data'][0]['cvc_check'] != 'passed':
+                print('カード情報の処理に失敗しました。')
+                messages.error(request, 'カード情報のCVCチェックに失敗しました。')
+                return redirect('blog:purchase')
+
+            print(f'ordersの支払い開始 order : {orders}')
+            # それぞれのorderの支払いを行う
+            charge = payjp.Charge.create(
+                amount = total_price,
+                currency = 'jpy', #通貨のこと
+                customer = customer.id,
+                description = '決済テスト',
+            )
+            print('支払いが完了')
+
+        except:
+            messages.error(request, '決済に失敗しました。')
+            return redirect('blog:purchase')
+
+        # tryの中の処理が成功したら
+        else:
+            # orderの課金タイプをクレカ、決済ステータスを決済完了に変更
+            for order in orders:
+                order.charge_type=1
+                order.order_status=1
+                order.save()
+
+            for article in articles:
+                UserItem.objects.create(user=request.user, article=article, charge_type=1)
+            print('UsetItemの作成完了')
+
+            messages.success(request, '購入が完了しました。')
+            return render(request, self.template_name, {
+                'amount': total_price,
+                'public_key': self.public_key,
+                'charge': charge,
+                'card': payjp_token,
+                'customer': customer,
+            })
