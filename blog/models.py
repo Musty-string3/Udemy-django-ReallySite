@@ -99,3 +99,21 @@ class UserItem(models.Model):
         verbose_name_plural = 'ユーザー購入商品'
         unique_together = ('user', 'article')
         db_table = 'user_item'
+
+class ViewCount(models.Model):
+    view_count = models.PositiveIntegerField(verbose_name='閲覧数', default=0)
+    article = models.OneToOneField(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='view_count')
+    created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
+
+    class Meta:
+        verbose_name_plural = '記事の閲覧カウント'
+        db_table = 'view_count'
+        indexes = [
+            models.Index(fields=['article', 'created_at']),
+        ]
+
+    def create_view_count(self):
+        self.view_count += 1
+        self.save()
+
