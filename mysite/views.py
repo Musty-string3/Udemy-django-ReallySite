@@ -27,12 +27,15 @@ class TopView(View):
         # 人気記事TOP3を取得
         last_three_articles = Article.objects.annotate(
             like_count=Count('article_like'),
-            comment_count=Count('comments')
+            comment_count=Count('comments'),
+            view_total_count=Count('view_count'),
             ).order_by('-created_at')[:3]
 
         popular_articles = Article.objects.annotate(
             like_count=Count('article_like'),
-            comment_count=Count('comments')).order_by('-like_count')[:2]
+            comment_count=Count('comments'),
+            view_total_count=Count('view_count'),
+            ).order_by('-like_count')[:2]
 
         # 決済未完了のorderを取得
         orders = Order.objects.filter(user=request.user, order_status=0)

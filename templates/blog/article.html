@@ -35,6 +35,9 @@
                 {% endfor %}
             </div>
             <div class="mt-3 small text-muted">
+                閲覧数 : {{ view_count }}
+            </div>
+            <div class="mt-1 small text-secondary">
                 {% if article.sell_flag and article.price != 0 %}
                 記事を販売中：価格{{ article.price }}円
                 {% else %}

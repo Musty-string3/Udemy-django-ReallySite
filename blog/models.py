@@ -102,7 +102,7 @@ class UserItem(models.Model):
 
 class ViewCount(models.Model):
     user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE)
-    article = models.OneToOneField(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='view_count')
+    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='view_count')
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
@@ -113,15 +113,10 @@ class ViewCount(models.Model):
             models.Index(fields=['article', 'created_at']),
         ]
 
-    # @classmethod
-    # def create_view_count(cls, user, article):
-    #     view_counts = cls.objects.filter(user=user, article=article)
-    #     # 存在していなかったら新規で作成
-    #     if not view_counts.exists():
-    #         view_counts
-    #     return True
-
     @classmethod
-    def view_counts(cls, article):
+    def create_view_count(cls, user, article):
+        if user != article.author:
+            # 存在していなかったら新規で作成し、存在していたらレコードを返す
+            cls.objects.get_or_create(user=user, article=article)
         view_count = cls.objects.filter(article=article).count()
         return view_count

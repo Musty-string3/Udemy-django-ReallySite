@@ -27,12 +27,13 @@
                     <strong class="d-inline-block mb-2 text-primary">Django</strong>
                     <h3 class="mb-2">{{ article.title }}</h3>
                     <div class="mb-1 text-muted">{{ article.created_at }}</div>
+                    <p class="card-text mb-auto">{{ article.text }}</p>
                     <div class="d-flex">
-                        <p class="card-text mb-auto">{{ article.text }}</p>
                         <i class="bi bi-suit-heart mb-1 me-1"></i>
                         {{ article.like_count }}
                         <i class="ms-1 bi bi-chat-left-dots mb-2 me-1"></i>
                         {{ article.comment_count }}
+                        <p class="ms-1">閲覧数 {{ article.view_total_count }}</p>
                     </div>
                     <a href="{% url 'blog:detail' article.id %}" class="None-stretched-link">続きを読む</a>
                 </div>

@@ -26,6 +26,7 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
         articles = Article.objects.annotate(
             like_count=Count('article_like'),
             comment_count=Count('comments'),
+            view_total_count=Count('view_count'),
         ).order_by('-created_at')
         # 1ページの記事の表示を変更
         paginator = Paginator(articles, 3).get_page(page_number)
@@ -80,16 +81,18 @@ class ArticleDetailView(CustomLoginRequiredMixin, View):
 
     def get(self, request, pk, *args, **kwargs):
         article = Article.objects.get(pk=pk)
-        print(article.tags.all())
-
         comments = Comment.objects.filter(article=article)
         comments_with_time = [(comment, days_ago_comment(comment.created_at)) for comment in comments]
         like_count = ArticleLike.objects.filter(article=article).count()
+
+        # 投稿者以外のユーザーが表示させたら閲覧数のカウントをする
+        view_count = ViewCount.create_view_count(request.user, article)
 
         return render(request, self.template_name, {
             'article': article,
             'comments_with_time': comments_with_time,
             'like_count': like_count,
+            'view_count': view_count,
         })
 
     def post(self, request, pk, *args, **kwargs):
