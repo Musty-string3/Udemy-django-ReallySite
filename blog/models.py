@@ -102,6 +102,7 @@ class UserItem(models.Model):
 
 class ViewCount(models.Model):
     view_count = models.PositiveIntegerField(verbose_name='閲覧数', default=0)
+    user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE)
     article = models.OneToOneField(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='view_count')
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
