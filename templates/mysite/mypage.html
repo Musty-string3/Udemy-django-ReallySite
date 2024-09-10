@@ -15,7 +15,7 @@
                 {% csrf_token %}
 
                 <input type="file" accept='image/*' id='id_image' name='image'>
-                <img src="{{ user.profile.image.url }}" alt="" class="col-2 mb-1 profile_image border ">
+                <img src="{{ user.profile.image.url }}" alt="" class="col-2 mb-1 profile_image rounded-circle border border-secondary">
 
                 <div class="col-12">
                     <label class="form-label">ユーザー名（公開されます）</label>

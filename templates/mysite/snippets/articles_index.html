@@ -1,7 +1,18 @@
 <h3 class="blog-post-title">{{ article.title }}</h3>
-<p class="blog-post-meta">{{ article.created_at }} <a href="#">
-    {{ article.author }}<span class="text-danger">ユーザーのアイコンも欲しいな</span></a>
-</p>
+<div class="blog-post-meta">
+    {{ article.created_at }}
+    <a href="#" class="ms-2 text-decoration-none text-dark">
+        {% comment %} {% if  %}{% endif %} {% endcomment %}
+        <img src="{{ article.author.profile.image.url }}" alt="" class="col-2 article_profile_image rounded-circle border border-secondary">
+        {{ article.author.profile.username }}
+        <span class="text-danger">各ユーザーごとのページへ遷移</span>
+        <span class="small text-muted">
+            {% if request.user == article.author %}
+            (あなた)
+            {% endif %}
+        </span>
+    </a>
+</div>
 <p class="text-danger">記事の星5評価</p>
 <p>{{ article.text|truncatechars:30 }}</p>
 <div class="d-flex">
@@ -9,7 +20,7 @@
     {{ article.like_count }}
     <i class="ms-1 bi bi-chat-left-dots mb-2 me-1"></i>
     {{ article.comment_count }}
-    <p class="text-danger ms-1">閲覧数</p>
+    <p class="ms-1">閲覧数 {{ article.view_total_count }}</p>
 </div>
 <div class="small text-muted">
     {% if article.id in uset_item_ids %}
