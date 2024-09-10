@@ -11,18 +11,21 @@
             <h1 class="display-4 font-italic">Django講座</h1>
             <p class="lead my-3">文章をかこう</p>
             <p class="lead mb-0">
-                <a href="#" class="font-weight-bold">続きを読む</a>
+                <a href="{% url 'blog:new' %}" class="font-weight-bold">新規作成</a>
             </p>
         </div>
     </div>
     <div class="row mb-2">
+        <div class="col-12 m-auto text-center">
+            <h3 class="shadow pb-2 pt-2 mb-3 bg-body-tertiary rounded">人気記事TOP2</h3>
+        </div>
         {% for article in popular_articles %}
         <div class="col-md-6">
             <div class="row g-0 border rounded overflow-hidden flex-md-row 
             mb-4 shadow-sm h-md-250 position-relative">
                 <div class="col p-4 d-flex flex-column position-static">
                     <strong class="d-inline-block mb-2 text-primary">Django</strong>
-                    <h3 class="mb-0">{{ article.title }}</h3>
+                    <h3 class="mb-2">{{ article.title }}</h3>
                     <div class="mb-1 text-muted">{{ article.created_at }}</div>
                     <div class="d-flex">
                         <p class="card-text mb-auto">{{ article.text }}</p>
@@ -43,15 +46,11 @@
     <div class="row">
         <div class="col-md-8">
             <h3 class="pb-4 font-italic border-bottom">
-                Django Lesson
+                最新記事TOP3
             </h3>
             {% for article in last_three_articles %}
                 <div class="blog-post">
-                    <h2 class="blog-post-title">{{ article.title }}</h2>
-                    <p class="blog-post-meta">{{ article.created_at }} by <a href="#">
-                        {{ article.author }}</a></p>
-                        <p>{{ article.text }}</p>
-                    <a class="None-stretched-link" href="blog/{{ article.id }}/">続きはこちら</a>
+                    {% include "mysite/snippets/articles_index.html" %}
                 </div>
                 <hr>
             {% endfor %}

@@ -15,23 +15,41 @@ from django.db.models import Count
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
-from blog.models import Article, ArticleLike
+from blog.models import *
 from mysite.forms import UserCreateForm, ProfileForm
-from common.myiste_def import CustomLoginRequiredMixin, prime_factorize
+from common.myiste_def import *
 
 
 class TopView(View):
     template_name = 'mysite/index.html'
+
     def get(self, request, *args, **kwargs):
-        last_three_articles = Article.objects.all().order_by('-created_at')[:3]
+        # 人気記事TOP3を取得
+        last_three_articles = Article.objects.annotate(
+            like_count=Count('article_like'),
+            comment_count=Count('comments')
+            ).order_by('-created_at')[:3]
+
         popular_articles = Article.objects.annotate(
             like_count=Count('article_like'),
             comment_count=Count('comments')).order_by('-like_count')[:2]
+
+        # 決済未完了のorderを取得
+        orders = Order.objects.filter(user=request.user, order_status=0)
+
+        # タプルの内容をflat=Trueでリスト形式に変更
+        purchased_article_ids = orders.values_list('article_id', flat=True)
+
+        # UserItemが存在していたら購入扱いにする
+        user_items = user_item_index(request, request.user, 1)
+        uset_item_ids = user_items.values_list('article_id', flat=True)
 
         return render(request, self.template_name, {
             'title': 'Really Site',
             'last_three_articles': last_three_articles,
             'popular_articles': popular_articles,
+            'purchased_article_ids': purchased_article_ids,
+            'uset_item_ids': uset_item_ids,
         })
 
 

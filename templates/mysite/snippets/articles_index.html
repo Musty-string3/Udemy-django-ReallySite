@@ -1,0 +1,32 @@
+<h3 class="blog-post-title">{{ article.title }}</h3>
+<p class="blog-post-meta">{{ article.created_at }} <a href="#">
+    {{ article.author }}<span class="text-danger">ユーザーのアイコンも欲しいな</span></a>
+</p>
+<p class="text-danger">記事の星5評価</p>
+<p>{{ article.text|truncatechars:30 }}</p>
+<div class="d-flex">
+    <i class="bi bi-suit-heart mb-1 me-1"></i>
+    {{ article.like_count }}
+    <i class="ms-1 bi bi-chat-left-dots mb-2 me-1"></i>
+    {{ article.comment_count }}
+    <p class="text-danger ms-1">閲覧数</p>
+</div>
+<div class="small text-muted">
+    {% if article.id in uset_item_ids %}
+    記事を販売中：価格{{ article.price }}円 購入済
+    {% elif article.sell_flag and article.price != 0 %}
+    記事を販売中：価格{{ article.price }}円
+    {% endif %}
+</div>
+{% if article.sell_flag and article.price != 0 and not article.author == request.user and not article.id in uset_item_ids %}
+    {% if article.id in purchased_article_ids and article.id in user_items %}
+    <a href="{% url 'blog:cart' %}?article_id={{ article.id }}&delete=True" type="button" class="btn btn-primary">カートから外す</a>
+    {% else %}
+    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
+        カートにいれる
+    </button>
+    {% endif %}
+{% include "mysite/snippets/modal_purchase.html" %}
+{% else %}
+<a class="None-stretched-link" href="{% url 'blog:detail' article.id %}">続きはこちら</a>
+{% endif %}

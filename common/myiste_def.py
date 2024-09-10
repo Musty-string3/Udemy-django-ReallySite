@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 
 
-from blog.models import ArticleLike
+from blog.models import ArticleLike, UserItem
 
 class CustomLoginRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
@@ -49,3 +49,7 @@ def prime_factorize(num):
     if num != 1:
         a.append(num)
     return a
+
+def user_item_index(request, user, charge_type):
+    user_item = UserItem.objects.filter(user=user, charge_type=charge_type)
+    return user_item

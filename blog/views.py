@@ -26,7 +26,7 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
         articles = Article.objects.annotate(
             like_count=Count('article_like'),
             comment_count=Count('comments'),
-        )
+        ).order_by('-created_at')
         # 1ページの記事の表示を変更
         paginator = Paginator(articles, 3).get_page(page_number)
 
@@ -36,11 +36,16 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
         # タプルの内容をflat=Trueでリスト形式に変更
         purchased_article_ids = orders.values_list('article_id', flat=True)
 
+        # UserItemが存在していたら購入扱いにする
+        user_items = user_item_index(request, request.user, 1)
+        uset_item_ids = user_items.values_list('article_id', flat=True)
+
         return render(request, self.template_name, {
             'page_title': 'ブログ一覧画面',
             'paginator_articles': paginator,
             'page_number': page_number,
             'purchased_article_ids': purchased_article_ids,
+            'uset_item_ids': uset_item_ids,
         })
 
 
@@ -254,6 +259,7 @@ class ArticleInCartView(CustomLoginRequiredMixin, View):
             try:
                 orders = Order.objects.filter(user=request.user, article=article_id, charge_type=0)
                 orders.delete()
+                messages.info(request, 'マイカートから商品を削除しました。')
             except Order.DoesNotExist as e:
                 messages.error(request, f'商品をカートから外す処理に失敗しました。{e}')
             return redirect('blog:index')
@@ -264,13 +270,14 @@ class ArticleInCartView(CustomLoginRequiredMixin, View):
                 messages.error(request, '記事の取得に失敗しました。')
                 return redirect('blog:index')
 
-            order = Order.objects.create(
+            Order.objects.create(
                 user=request.user,
                 article=article,
                 price=article.price,
                 charge_type=0,
                 order_status=0,
             )
+            messages.success(request, 'マイカートに追加しました。')
             return redirect('blog:index')
 
 
@@ -300,6 +307,12 @@ class ArticlePurchaseView(CustomLoginRequiredMixin, View):
         total_price = int(request.POST.get('total_price'))
         articles = [order.article for order in orders]
         payjp_token = request.POST.get('payjp-token')
+
+        print('リクエスト内容', request.POST.get)
+
+        if total_price < 50 or total_price < 9999999:
+            messages.error(request, 'PAY.JPでは50円未満または9,999,999円超は決済範囲外の扱いです。')
+            return redirect('blog:purchase')
 
         # UserItemが存在していたらMultipleObjectsReturnedエラーを返す
         print('UserItemが存在するかの確認')
