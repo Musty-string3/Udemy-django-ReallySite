@@ -75,53 +75,6 @@ class ArticleNewView(CustomLoginRequiredMixin, View):
             'article_new_form': article_new_form,
         })
 
-
-class ArticleEditView(CustomLoginRequiredMixin, View):
-    template_name = 'mysite/blog_new.html'
-
-    def get(self, request, pk, *args, **kwargs):
-        article = Article.objects.get(pk=pk)
-        tag_list = article.tags.all()
-        tag_string = '、'.join([tag.name for tag in tag_list])
-
-        return render(request, self.template_name, {
-            'title': 'ブログ編集',
-            'article_title': article.title,
-            'article_text': article.text,
-            'tags': tag_string,
-            'article_is_public': article.is_public,
-            'article_sell_flag': article.sell_flag,
-            'article_price': article.price,
-        })
-
-    def post(self, request, pk, *args, **kwargs):
-        article = Article.objects.get(pk=pk)
-        article_new_form = ArticleNewForm(request.POST, instance=article)
-        print('request.POST.get', request.POST.get)
-
-        if article_new_form.is_valid():
-            # forms.pyの中でタグの設定などの処理を行う
-            form = article_new_form.save(request.user, commit=False)
-            form.save()
-
-            messages.success(request, '記事を作成しました。')
-            return redirect('blog:detail', form.id)
-        else:
-            article_new_form = ArticleNewForm(instance=article)
-            tags = request.POST.get('tags')
-            messages.error(request, '記事の作成に失敗しました。')
-
-        return render(request, self.template_name, {
-            'article_new_form': article_new_form,
-            'article_title': article_new_form['title'].initial,
-            'article_text': article_new_form['text'].initial,
-            'tags': tags,
-            'article_is_public': article_new_form['is_public'].initial,
-            'article_sell_flag': article_new_form['sell_flag'].initial,
-            'article_price': article_new_form['price'].initial,
-        })
-
-
 class ArticleDetailView(CustomLoginRequiredMixin, View):
     template_name = 'blog/article.html'
 
@@ -177,6 +130,53 @@ class ArticleDetailView(CustomLoginRequiredMixin, View):
             'comments_with_time': comments_with_time,
             'like_count': like_count,
         })
+
+class ArticleEditView(CustomLoginRequiredMixin, View):
+    template_name = 'mysite/blog_new.html'
+
+    def get(self, request, pk, *args, **kwargs):
+        article = Article.objects.get(pk=pk)
+        tag_list = article.tags.all()
+        tag_string = '、'.join([tag.name for tag in tag_list])
+
+        return render(request, self.template_name, {
+            'title': 'ブログ編集',
+            'article_title': article.title,
+            'article_text': article.text,
+            'tags': tag_string,
+            'article_is_public': article.is_public,
+            'article_sell_flag': article.sell_flag,
+            'article_price': article.price,
+        })
+
+    def post(self, request, pk, *args, **kwargs):
+        article = Article.objects.get(pk=pk)
+        article_new_form = ArticleNewForm(request.POST, instance=article)
+        print('request.POST.get', request.POST.get)
+
+        if article_new_form.is_valid():
+            # forms.pyの中でタグの設定などの処理を行う
+            form = article_new_form.save(request.user, commit=False)
+            form.save()
+
+            messages.success(request, '記事を作成しました。')
+            return redirect('blog:detail', form.id)
+        else:
+            article_new_form = ArticleNewForm(instance=article)
+            tags = request.POST.get('tags')
+            messages.error(request, '記事の作成に失敗しました。')
+
+        return render(request, self.template_name, {
+            'article_new_form': article_new_form,
+            'article_title': article_new_form['title'].initial,
+            'article_text': article_new_form['text'].initial,
+            'tags': tags,
+            'article_is_public': article_new_form['is_public'].initial,
+            'article_sell_flag': article_new_form['sell_flag'].initial,
+            'article_price': article_new_form['price'].initial,
+        })
+
+
 
 
 class ArticleDeleteView(CustomLoginRequiredMixin, View):
