@@ -101,7 +101,6 @@ class UserItem(models.Model):
         db_table = 'user_item'
 
 class ViewCount(models.Model):
-    view_count = models.PositiveIntegerField(verbose_name='閲覧数', default=0)
     user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE)
     article = models.OneToOneField(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='view_count')
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
@@ -114,7 +113,15 @@ class ViewCount(models.Model):
             models.Index(fields=['article', 'created_at']),
         ]
 
-    def create_view_count(self):
-        self.view_count += 1
-        self.save()
+    # @classmethod
+    # def create_view_count(cls, user, article):
+    #     view_counts = cls.objects.filter(user=user, article=article)
+    #     # 存在していなかったら新規で作成
+    #     if not view_counts.exists():
+    #         view_counts
+    #     return True
 
+    @classmethod
+    def view_counts(cls, article):
+        view_count = cls.objects.filter(article=article).count()
+        return view_count
