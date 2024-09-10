@@ -16,6 +16,9 @@
             <a class="p-2 link-secondary" href="{% url 'mypage' %}">マイページ</a>
             <a class="p-2 link-secondary" href="{% url 'pay' %}">決済デモページ</a>
             <a class="p-2 link-secondary" href="{% url 'cache' %}">キャッシュテスト</a>
+            <a class="p-2 link-secondary" href="#">管理者の方</a>
+            <a class="p-2 link-secondary" href="#">DM</a>
+            <a class="p-2 link-secondary" href="#">グループチャット</a>
             {% if user.is_authenticated %}
                 <form action="{% url 'logout' %}" method='post'>
                     {% csrf_token %}
