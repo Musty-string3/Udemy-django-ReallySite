@@ -1,11 +1,10 @@
 <h3 class="blog-post-title">{{ article.title }}</h3>
 <div class="blog-post-meta">
     {{ article.created_at }}
-    <a href="#" class="ms-2 text-decoration-none text-dark">
-        {% comment %} {% if  %}{% endif %} {% endcomment %}
+    <a href="{% url 'author' pk=article.author.id %}" class="ms-2 text-decoration-none text-dark">
         <img src="{{ article.author.profile.image.url }}" alt="" class="col-2 article_profile_image rounded-circle border border-secondary">
         {{ article.author.profile.username }}
-        <span class="text-danger">各ユーザーごとのページへ遷移</span>
+        <span class="text-danger"></span>
         <span class="small text-muted">
             {% if request.user == article.author %}
             (あなた)

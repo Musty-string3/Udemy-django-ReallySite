@@ -16,6 +16,7 @@ urlpatterns = [
     path('login/', views.Login.as_view(), name="login"),
     path('logout/', LogoutView.as_view(), name="logout"),
     path('mypage/', views.MypageView.as_view(), name='mypage'),
+    path('author/<int:pk>', views.AuthorView.as_view(), name='author'),
     path('contact/', views.ContactView.as_view(), name='contact'),
     path('pay/', views.PayView.as_view(), name='pay'),
     path('cache_test/', cache_page(30)(views.CacheTestView.as_view()), name='cache'),

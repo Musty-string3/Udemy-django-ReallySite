@@ -130,6 +130,31 @@ class MypageView(CustomLoginRequiredMixin, View):
         })
 
 
+class AuthorView(CustomLoginRequiredMixin, View):
+    template_name = 'mysite/author.html'
+
+    def get(self, request, pk, *args, **kwargs):
+        try:
+            User = get_user_model()
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            messages.error(request, '存在しないユーザーです。')
+            return redirect('/')
+
+        # 投稿主だったらマイページへ遷移させる
+        if request.user == user:
+            return redirect('mypage')
+
+        return render(request, self.template_name, {
+            'user': user,
+        })
+
+    def post(self, request, *args, **kwargs):
+
+        return render(request, self.template_name, {
+        })
+
+
 class ContactView(View):
     template_name = 'mysite/contact.html'
 
