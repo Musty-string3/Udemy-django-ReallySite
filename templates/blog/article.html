@@ -26,7 +26,7 @@
             </p>
             <p>{{ article.text }}</p>
             {% comment %} {% endcache %} {% endcomment %}
-            {% include "mysite/snippets/like.html" %}
+            {% include "snippets/like.html" %}
             <div class="mt-2 me-2">
                 {% for tag in article.tags.all %}
                     <a href="{% url 'blog:tag_detail' name=tag.name %}" class="btn btn-sm btn-outline-secondary">
@@ -46,7 +46,7 @@
             </div>
 
             <hr class="my-4">
-            {% include "mysite/snippets/comment.html" %}
+            {% include "snippets/comment.html" %}
         </div>
 
         {% comment %} サイドバー {% endcomment %}

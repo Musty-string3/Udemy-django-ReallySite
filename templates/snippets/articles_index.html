@@ -36,7 +36,7 @@
         カートにいれる
     </button>
     {% endif %}
-{% include "mysite/snippets/modal_purchase.html" %}
+{% include "snippets/modal_purchase.html" %}
 {% else %}
 <a class="None-stretched-link" href="{% url 'blog:detail' article.id %}">続きはこちら</a>
 {% endif %}

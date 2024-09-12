@@ -11,16 +11,16 @@
 
             {% for article in paginator_articles %}
                 <div class="blog-post">
-                    {% include "mysite/snippets/articles_index.html" %}
+                    {% include "snippets/articles_index.html" %}
                 </div>
                 <hr>
             {% endfor %}
 
             {% comment %} ページネーション {% endcomment %}
-            {% include "mysite/snippets/pagination.html" %}
+            {% include "snippets/pagination.html" %}
         </div>
         {% comment %} サイドバー {% endcomment %}
-        {% include "mysite/snippets/sideber.html" %}
+        {% include "snippets/sideber.html" %}
     </div>
 </main>
 

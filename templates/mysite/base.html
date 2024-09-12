@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="en">
     <head>
-        {% include "mysite/snippets/head.html" %}
+        {% include "snippets/head.html" %}
     </head>
     <body>
-        {% include "mysite/snippets/header.html" %}
-        {% include "mysite/snippets/messages.html" %}
+        {% include "snippets/header.html" %}
+        {% include "snippets/messages.html" %}
 
         {% block content %}{% endblock %}
 
-        {% include "mysite/snippets/footer.html" %}
+        {% include "snippets/footer.html" %}
 
     </body>
 </html>

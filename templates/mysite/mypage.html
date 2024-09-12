@@ -85,7 +85,7 @@
                             カートにいれる
                         </button>
                         {% endif %}
-                    {% include "mysite/snippets/modal_purchase.html" %}
+                    {% include "snippets/modal_purchase.html" %}
                     {% else %}
                     <a class="None-stretched-link" href="{% url 'blog:detail' article.id %}">続きを見る</a>
                     {% endif %}
@@ -126,7 +126,7 @@
                             カートにいれる
                         </button>
                         {% endif %}
-                    {% include "mysite/snippets/modal_purchase.html" %}
+                    {% include "snippets/modal_purchase.html" %}
                     {% else %}
                     <a class="None-stretched-link" href="{% url 'blog:detail' article.id %}">続きを見る</a>
                     {% endif %}
@@ -135,7 +135,7 @@
                 </div>
             </div>
         </div>
-        {% include 'mysite/snippets/sideber.html' %}
+        {% include 'snippets/sideber.html' %}
 
 
     </div>
