@@ -23,7 +23,7 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         page_number = request.GET.get('page')
 
-        articles = Article.objects.annotate(
+        articles = Article.objects.filter(is_public=True).annotate(
             like_count=Count('article_like'),
             comment_count=Count('comments'),
             view_total_count=Count('view_count'),
@@ -197,15 +197,26 @@ class ArticleTagView(CustomLoginRequiredMixin, View):
     def get(self, request, name, *args, **kwargs):
         page_number = request.GET.get('page')
         tag = ArticleTag.objects.get(name=name)
-        tag_obj = tag.articles.all()
-        print(tag_obj)
+        articles = tag.articles.all()
+        tag_obj = articles.filter(is_public=True)
 
         paginator = Paginator(tag_obj, 3).get_page(page_number)
+
+        orders = Order.objects.filter(user=request.user, order_status=0)
+
+        # タプルの内容をflat=Trueでリスト形式に変更
+        purchased_article_ids = orders.values_list('article_id', flat=True)
+
+        # UserItemが存在していたら購入扱いにする
+        user_items = user_item_index(request, request.user, 1)
+        uset_item_ids = user_items.values_list('article_id', flat=True)
 
         return render(request, self.template_name, {
             'page_title': '記事一覧 #{}'.format(name),
             'paginator_articles': paginator,
             'page_number': page_number,
+            'purchased_article_ids': purchased_article_ids,
+            'uset_item_ids': uset_item_ids,
         })
 
 class ArticleLikeView(CustomLoginRequiredMixin, View):
@@ -313,7 +324,7 @@ class ArticlePurchaseView(CustomLoginRequiredMixin, View):
 
         print('リクエスト内容', request.POST.get)
 
-        if total_price < 50 or total_price < 9999999:
+        if total_price < 50 or total_price > 9999999:
             messages.error(request, 'PAY.JPでは50円未満または9,999,999円超は決済範囲外の扱いです。')
             return redirect('blog:purchase')
 
@@ -378,3 +389,29 @@ class ArticlePurchaseView(CustomLoginRequiredMixin, View):
                 'card': payjp_token,
                 'customer': customer,
             })
+
+class DMIndexView(CustomLoginRequiredMixin, View):
+    template_name = 'dm/index.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {
+            
+        })
+
+    def post(self, request, *args, **kwargs):
+        return render(request, self.template_name, {
+            
+        })
+
+class DMDetailView(CustomLoginRequiredMixin, View):
+    template_name = 'dm/detail.html'
+
+    def get(self, request, pk, *args, **kwargs):
+        return render(request, self.template_name, {
+            
+        })
+
+    def post(self, request, pk, *args, **kwargs):
+        return render(request, self.template_name, {
+            
+        })

@@ -8,26 +8,51 @@
             </div>
         </div>
     </header>
-    <div class="py-1 mb-2">
-        <nav class="nab d-flex justify-content-between">
-            <a class="p-2 link-secondary" href="{% url 'blog:index' %}">ブログ</a>
-            <a class="p-2 link-secondary" href="{% url 'blog:purchase' %}">マイカート</a>
-            <a class="p-2 link-secondary" href="{% url 'contact' %}">お問い合わせ</a>
-            <a class="p-2 link-secondary" href="{% url 'mypage' %}">マイページ</a>
-            <a class="p-2 link-secondary" href="{% url 'pay' %}">決済デモページ</a>
-            <a class="p-2 link-secondary" href="{% url 'cache' %}">キャッシュテスト</a>
-            <a class="p-2 link-secondary" href="#">管理者の方</a>
-            <a class="p-2 link-secondary" href="#">DM</a>
-            <a class="p-2 link-secondary" href="#">グループチャット</a>
-            {% if user.is_authenticated %}
-                <form action="{% url 'logout' %}" method='post'>
-                    {% csrf_token %}
-                    <button class="btn btn-outline-secondary" type="submit">ログアウト</button>
-                </form>
-            {% else %}
-                <a class="p-2 link-secondary" href="{% url 'login' %}">ログイン</a>
-                <a class="p-2 link-secondary" href="{% url 'signup' %}">サインイン</a>
-            {% endif %}
-        </nav>
-    </div>
 </div>
+<nav class="navbar navbar-expand bg-body-tertiary mb-2 bg-info pt-2 pb-2 mb-5">
+    <div class="container container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="{% url 'blog:index' %}">ブログ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'blog:purchase' %}">マイカート</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'contact' %}">お問い合わせ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'mypage' %}">マイページ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#}">グループチャット</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#}">管理者の方</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    デモ一覧
+                    </a>
+                    <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'pay' %}">決済デモページ</a></li>
+                    <li><a class="dropdown-item" href="{% url 'cache' %}">キャッシュテスト</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        {% if user.is_authenticated %}
+        <form action="{% url 'logout' %}" method='post'>
+            {% csrf_token %}
+            <button class="btn btn-outline-secondary" type="submit">ログアウト</button>
+        </form>
+        {% else %}
+            <a class="p-2 link-secondary" href="{% url 'login' %}">ログイン</a>
+            <a class="p-2 link-secondary" href="{% url 'signup' %}">サインイン</a>
+        {% endif %}
+    </div>
+</nav>

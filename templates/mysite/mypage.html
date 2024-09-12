@@ -10,6 +10,7 @@
             <h3 class="pb-4 mb-4 font-italic border-bottom">
                 マイページ
             </h3>
+            <a href="{% url 'blog:dm_index' %}">DM一覧</a>
 
             <form class="" method="post" enctype='multipart/form-data'>
                 {% csrf_token %}
@@ -46,18 +47,92 @@
                         <input type="text" class="form-control" id="id_address" name="address" placeholder="住所" value={{ user.profile.address }}>
                     </div>
 
-                    <div class="col-12">
+                    <div class="col-12 mt-2">
                         <button type="submit" class="btn btn-success">保存</button>
                     </div>
                 </div>
             </form>
             <hr>
             <div class="row">
-                投稿した記事
+                <h4 class="mb-4">公開中の記事</h4>
+                <div class="col-10">
+                    {% for article in false_public_artiles %}
+                    <h5 class="blog-post-title">{{ article.title }}</h5>
+                    <div class="blog-post-meta">
+                        {{ article.created_at }}
+                    </div>
+                    <p class="text-danger">記事の星5評価と画像を追加したい</p>
+                    <p>{{ article.text|truncatechars:30 }}</p>
+                    <div class="d-flex">
+                        <i class="bi bi-suit-heart mb-1 me-1"></i>
+                        {{ article.like_count }}
+                        <i class="ms-1 bi bi-chat-left-dots mb-2 me-1"></i>
+                        {{ article.comment_count }}
+                        <p class="ms-1">閲覧数 {{ article.view_total_count }}</p>
+                    </div>
+                    <div class="small text-muted">
+                        {% if article.id in uset_item_ids %}
+                        記事を販売中：価格{{ article.price }}円 購入済
+                        {% elif article.sell_flag and article.price != 0 %}
+                        記事を販売中：価格{{ article.price }}円
+                        {% endif %}
+                    </div>
+                    {% if article.sell_flag and article.price != 0 and not article.author == request.user and not article.id in uset_item_ids %}
+                        {% if article.id in purchased_article_ids and article.id in user_items %}
+                        <a href="{% url 'blog:cart' %}?article_id={{ article.id }}&delete=True" type="button" class="btn btn-primary">カートから外す</a>
+                        {% else %}
+                        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
+                            カートにいれる
+                        </button>
+                        {% endif %}
+                    {% include "mysite/snippets/modal_purchase.html" %}
+                    {% else %}
+                    <a class="None-stretched-link" href="{% url 'blog:detail' article.id %}">続きを見る</a>
+                    {% endif %}
+
+                    {% endfor %}
+                </div>
             </div>
             <hr>
             <div class="row">
-                非公開中の記事
+                <h4 class="mb-4">非公開中の記事</h4>
+                <div class="col-10">
+                    {% for article in false_public_artiles %}
+                    <h5 class="blog-post-title">{{ article.title }}</h5>
+                    <div class="blog-post-meta">
+                        {{ article.created_at }}
+                    </div>
+                    <p class="text-danger">記事の星5評価と画像を追加したい</p>
+                    <p>{{ article.text|truncatechars:30 }}</p>
+                    <div class="d-flex">
+                        <i class="bi bi-suit-heart mb-1 me-1"></i>
+                        {{ article.like_count }}
+                        <i class="ms-1 bi bi-chat-left-dots mb-2 me-1"></i>
+                        {{ article.comment_count }}
+                        <p class="ms-1">閲覧数 {{ article.view_total_count }}</p>
+                    </div>
+                    <div class="small text-muted">
+                        {% if article.id in uset_item_ids %}
+                        記事を販売中：価格{{ article.price }}円 購入済
+                        {% elif article.sell_flag and article.price != 0 %}
+                        記事を販売中：価格{{ article.price }}円
+                        {% endif %}
+                    </div>
+                    {% if article.sell_flag and article.price != 0 and not article.author == request.user and not article.id in uset_item_ids %}
+                        {% if article.id in purchased_article_ids and article.id in user_items %}
+                        <a href="{% url 'blog:cart' %}?article_id={{ article.id }}&delete=True" type="button" class="btn btn-primary">カートから外す</a>
+                        {% else %}
+                        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
+                            カートにいれる
+                        </button>
+                        {% endif %}
+                    {% include "mysite/snippets/modal_purchase.html" %}
+                    {% else %}
+                    <a class="None-stretched-link" href="{% url 'blog:detail' article.id %}">続きを見る</a>
+                    {% endif %}
+
+                    {% endfor %}
+                </div>
             </div>
         </div>
         {% include 'mysite/snippets/sideber.html' %}

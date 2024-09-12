@@ -26,13 +26,13 @@ class TopView(View):
 
     def get(self, request, *args, **kwargs):
         # 人気記事TOP3を取得
-        last_three_articles = Article.objects.annotate(
+        last_three_articles = Article.objects.filter(is_public=True).annotate(
             like_count=Count('article_like'),
             comment_count=Count('comments'),
             view_total_count=Count('view_count'),
             ).order_by('-created_at')[:3]
 
-        popular_articles = Article.objects.annotate(
+        popular_articles = Article.objects.filter(is_public=True).annotate(
             like_count=Count('article_like'),
             comment_count=Count('comments'),
             view_total_count=Count('view_count'),
@@ -111,8 +111,15 @@ class MypageView(CustomLoginRequiredMixin, View):
     template_name = 'mysite/mypage.html'
 
     def get(self, request, *args, **kwargs):
+        false_public_artiles = Article.objects.filter(author=request.user, is_public=False).annotate(
+            like_count=Count('article_like'),
+            comment_count=Count('comments'),
+            view_total_count=Count('view_count'),
+        )
+
         return render(request, self.template_name, {
             'prefecture_choices': PREFECTURE_CHOICE,
+            'false_public_artiles': false_public_artiles,
         })
 
     def post(self, request, *args, **kwargs):
@@ -127,9 +134,7 @@ class MypageView(CustomLoginRequiredMixin, View):
             messages.error(request, 'プロフィール情報が更新できませんでした。')
             return redirect('mypage')
 
-        return render(request, self.template_name, {
-            'prefecture_choices': PREFECTURE_CHOICE,
-        })
+        return redirect('mypage')
 
 
 class AuthorView(CustomLoginRequiredMixin, View):
@@ -147,13 +152,15 @@ class AuthorView(CustomLoginRequiredMixin, View):
         if request.user == user:
             return redirect('mypage')
 
+        public_artiles = Article.objects.filter(author=request.user, is_public=True).annotate(
+            like_count=Count('article_like'),
+            comment_count=Count('comments'),
+            view_total_count=Count('view_count'),
+        )
+
         return render(request, self.template_name, {
             'user': user,
-        })
-
-    def post(self, request, *args, **kwargs):
-
-        return render(request, self.template_name, {
+            'public_artiles': public_artiles,
         })
 
 
