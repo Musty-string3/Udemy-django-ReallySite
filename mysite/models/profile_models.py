@@ -65,7 +65,7 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, verbose_name='ユーザー', unique=True, on_delete=models.CASCADE, primary_key=True)
     username = models.CharField(verbose_name='ユーザー名', default='匿名ユーザー', max_length=50)
     zipcode = models.CharField(verbose_name='郵便番号', max_length=8, blank=True, null=True)
-    prefecture = models.CharField(verbose_name='都道府県',choices=PREFECTURE_CHOICE, default=0, max_length=8)
+    prefecture = models.SmallIntegerField(verbose_name='都道府県',choices=PREFECTURE_CHOICE, default=0)
     city = models.CharField(verbose_name='市区町村', max_length=100, blank=True, null=True)
     address = models.CharField(verbose_name='住所', max_length=200, blank=True, null=True)
     image = models.ImageField(verbose_name='プロフィール画像', upload_to=upload_image_to, default='images/default.png', blank=True)

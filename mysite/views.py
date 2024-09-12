@@ -18,6 +18,7 @@ from django.views.decorators.cache import cache_page
 from blog.models import *
 from mysite.forms import UserCreateForm, ProfileForm
 from common.myiste_def import *
+from mysite.models.profile_models import PREFECTURE_CHOICE
 
 
 class TopView(View):
@@ -111,14 +112,14 @@ class MypageView(CustomLoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {
+            'prefecture_choices': PREFECTURE_CHOICE,
         })
 
     def post(self, request, *args, **kwargs):
-        print(request.FILES)
-        print(request.POST)
         profile_form = ProfileForm(request.POST, request.FILES)
+        user_image = request.user.profile.image.url
         if profile_form.is_valid():
-            profile = profile_form.save(commit=False)
+            profile = profile_form.save(user_image, commit=False)
             profile.user = request.user
             profile.save()
             messages.success(request, 'プロフィール情報が更新されました。')
@@ -127,6 +128,7 @@ class MypageView(CustomLoginRequiredMixin, View):
             return redirect('mypage')
 
         return render(request, self.template_name, {
+            'prefecture_choices': PREFECTURE_CHOICE,
         })
 
 

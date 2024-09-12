@@ -32,3 +32,12 @@ class ProfileForm(forms.ModelForm):
             'address',
             'image',
         )
+
+    def save(self, user_image=None, commit=True):
+        profile = super().save(commit=False)
+        # 新しい画像がアップロードされていない場合、既存の画像を保持
+        if self.cleaned_data.get('image') == "images/default.png" and user_image != "images/default.png":
+            profile.image = user_image.replace('media/', '')
+        if commit:
+            profile.save()
+        return profile
