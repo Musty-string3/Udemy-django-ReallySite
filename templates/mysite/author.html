@@ -3,23 +3,14 @@
 {% load static %}
 
 {% block content %}
-
+<hr>
 <main class="container">
     <div class="row">
         <div class="col-md-8 m-auto">
-            <h3 class="pb-4 mb-4 font-italic border-bottom">
-                {{ user }}
-            </h3>
 
             <div class="col-12">
                 <img src="{{ user.profile.image.url }}" alt="" class="col-2 mb-1 profile_author_image rounded-circle border border-secondary">
-                <label class="form-label">ユーザー名</label>
-                {{ user.profile.username }}
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">都道府県</label>
-                {{ user.profile.prefecture }}
+                <span class="h5 ms-1">{{ user.profile.username }}</span>
             </div>
 
             <hr>
