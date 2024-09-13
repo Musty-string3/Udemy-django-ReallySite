@@ -10,10 +10,26 @@
             <div class="col-12">
                 <img src="{{ user.profile.image.url }}" alt="" class="col-2 mb-1 profile_author_image rounded-circle border border-secondary">
                 <span class="h5 ms-1">{{ user.profile.username }}</span>
+                <div class="d-flex">
+                    <div class="me-3 mt-1">
+                        <a href="{% url 'blog:follow' pk=user.id %}?follower=True" class="text-decoration-none">フォロー数 {{ follows_count }}</a>
+                        <a href="{% url 'blog:follow' pk=user.id %}" class="text-decoration-none">フォロワー数 {{ followed_count }}</a>
+                    </div>
+                    <form action="{% url 'blog:follow' user.id %}" method='post'>
+                        {% csrf_token %}
+                        {% if follow %}
+                        <input type="hidden" name="delete" value=True>
+                        <button class="btn btn-outline-info pt-1 pb-1 rounded-pill">フォロー解除</button>
+                        {% else %}
+                        <button class="btn btn-outline-info pt-1 pb-1 rounded-pill">フォローする</button>
+                        {% endif %}
+                    </form>
+                </div>
                 <a class="p-2 h5 link-secondary" href="#"><i class="bi bi-envelope"></i></a>
             </div>
 
             <hr>
+            {% if user.profile.is_public %}
             <div class="row">
                 <h4 class="mb-4">投稿記事</h4>
                 <div class="col-10">
@@ -55,6 +71,9 @@
                     {% endfor %}
                 </div>
             </div>
+            {% else %}
+            <p class="text-center pt-3">アカウントは非公開です</p>
+            {% endif %}
         </div>
         {% comment %} {% include 'snippets/sideber.html' %} {% endcomment %}
 

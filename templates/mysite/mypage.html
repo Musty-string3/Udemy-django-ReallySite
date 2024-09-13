@@ -47,7 +47,13 @@
                         <input type="text" class="form-control" id="id_address" name="address" placeholder="住所" value={{ user.profile.address }}>
                     </div>
 
-                    <div class="col-12 mt-2">
+                    <div class="col-12 ms-3 mt-3 form-check">
+                        <input type="hidden" name='is_public' value=false>
+                        <input type="checkbox" class="form-check-input" id="IsPublicCheck" name='is_public' value="1" {% if user.profile.is_public %}checked{% endif %}>
+                        <label class="form-check-label" for="IsPublicCheck">プロフィールを公開しますか？</label>
+                    </div>
+
+                    <div class="col-12 mt-3">
                         <button type="submit" class="btn btn-success">保存</button>
                     </div>
                 </div>

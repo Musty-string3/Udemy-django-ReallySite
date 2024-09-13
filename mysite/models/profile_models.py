@@ -69,6 +69,8 @@ class Profile(models.Model):
     city = models.CharField(verbose_name='市区町村', max_length=100, blank=True, null=True)
     address = models.CharField(verbose_name='住所', max_length=200, blank=True, null=True)
     image = models.ImageField(verbose_name='プロフィール画像', upload_to=upload_image_to, default='images/default.png', blank=True)
+    follows = models.ManyToManyField(settings.AUTH_USER_MODEL, verbose_name='フォローしているユーザー', related_name='followed_by')
+    is_public = models.BooleanField(verbose_name='プロフィールを公開', default=1)
 
     class Meta:
         verbose_name_plural = 'プロフィール'

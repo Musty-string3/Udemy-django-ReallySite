@@ -31,6 +31,7 @@ class ProfileForm(forms.ModelForm):
             'city',
             'address',
             'image',
+            'is_public',
         )
 
     def save(self, user_image=None, commit=True):
