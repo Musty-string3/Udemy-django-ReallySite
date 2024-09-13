@@ -12,4 +12,11 @@ urlpatterns = [
     path('<int:pk>/like/', views.ArticleLikeView.as_view(), name='like_detail'),
     path('cart/', views.ArticleInCartView.as_view(), name='cart'),
     path('purchase/', views.ArticlePurchaseView.as_view(), name='purchase'),
+
+    # フォロー
+    path('follow/<int:pk>', views.FollowView.as_view(), name='follow'),
+
+    # DM
+    path('dm/index', views.DMIndexView.as_view(), name="dm_index"),
+    path('dm/<int:pk>', views.DMDetailView.as_view(), name="dm_detail"),
 ]

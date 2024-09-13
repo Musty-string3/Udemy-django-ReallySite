@@ -9,6 +9,7 @@ from django.views import View
 from django.db.models import Count, Sum
 
 from .models import *
+from mysite.models.profile_models import Profile
 from .forms import CommentForm, ArticleNewForm
 from common.myiste_def import *
 
@@ -17,6 +18,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
 
 
+
+################
+##  記事の一覧
+################
 class ArticleIndexView(CustomLoginRequiredMixin, View):
     template_name = 'blog/blogs.html'
 
@@ -50,6 +55,10 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
         })
 
 
+
+################
+##  記事の作成
+################
 class ArticleNewView(CustomLoginRequiredMixin, View):
     template_name = 'mysite/blog_new.html'
 
@@ -76,6 +85,10 @@ class ArticleNewView(CustomLoginRequiredMixin, View):
             'article_new_form': article_new_form,
         })
 
+
+################
+##  記事の詳細
+################
 class ArticleDetailView(CustomLoginRequiredMixin, View):
     template_name = 'blog/article.html'
 
@@ -134,6 +147,10 @@ class ArticleDetailView(CustomLoginRequiredMixin, View):
             'like_count': like_count,
         })
 
+
+################
+##  記事の編集
+################
 class ArticleEditView(CustomLoginRequiredMixin, View):
     template_name = 'mysite/blog_new.html'
 
@@ -181,7 +198,9 @@ class ArticleEditView(CustomLoginRequiredMixin, View):
 
 
 
-
+################
+##  記事の削除
+################
 class ArticleDeleteView(CustomLoginRequiredMixin, View):
     def get(self, request, pk, *args, **kwargs):
         try:
@@ -191,6 +210,10 @@ class ArticleDeleteView(CustomLoginRequiredMixin, View):
             messages.error(request, '記事の削除に失敗しました。')
         return redirect('blog:index')
 
+
+################
+##  タグ
+################
 class ArticleTagView(CustomLoginRequiredMixin, View):
     template_name = 'blog/blogs.html'
 
@@ -219,6 +242,10 @@ class ArticleTagView(CustomLoginRequiredMixin, View):
             'uset_item_ids': uset_item_ids,
         })
 
+
+################
+##  非同期いいね
+################
 class ArticleLikeView(CustomLoginRequiredMixin, View):
 
     def get(self, request, pk, *args, **kwargs):
@@ -261,6 +288,10 @@ class ArticleLikeView(CustomLoginRequiredMixin, View):
         return JsonResponse(context)
 
 
+
+################
+##  カート
+################
 class ArticleInCartView(CustomLoginRequiredMixin, View):
     # カートに入れるを選択するとorderが作成され、カートから外すを選択でorderを削除する処理
 
@@ -295,6 +326,10 @@ class ArticleInCartView(CustomLoginRequiredMixin, View):
             return redirect('blog:index')
 
 
+
+################
+##  決済
+################
 class ArticlePurchaseView(CustomLoginRequiredMixin, View):
     # Orderの決済未登録を取得して表示させる
     # 購入できたらUserItemにデータを作成する
@@ -390,6 +425,69 @@ class ArticlePurchaseView(CustomLoginRequiredMixin, View):
                 'customer': customer,
             })
 
+################
+##  フォロー
+################
+class FollowView(CustomLoginRequiredMixin, View):
+
+    # フォロー一覧画面
+    def get(self, request, pk, *args, **kwargs):
+        template_name = 'follow/follows.html'
+
+        follower = request.GET.get('follower', None)
+
+        user = get_user_model().objects.get(pk=pk)
+        if follower:
+            follower_list = user.profile.follows.all()
+            print(follower_list)
+            if request.user == user:
+                title = 'あなたのフォロワー'
+            title = f'{user.profile.username}さんのフォロワー'
+            context = {
+                'follower': follower_list,
+                'title': title,
+            }
+        else:
+            followed_by_list = user.followed_by.all()
+            if request.user == user:
+                title = 'あなたがフォローしたユーザー'
+            title = f'{user.profile.username}さんのフォローしたユーザー'
+            context = {
+                'followed_by': followed_by_list,
+                'title': title,
+            }
+
+        return render(request, template_name, context)
+
+    # フォローした時の処理
+    def post(self, request, pk, *args, **kwargs):
+        follow_delete = request.POST.get('delete', None)
+
+        # TODO:非同期処理にする
+
+        try:
+            user = get_user_model().objects.get(pk=pk)
+        except get_user_model().DoesNotExist:
+            messages.error(request, '存在しないユーザーにアクセスしました。')
+            return redirect('/')
+
+        profile = Profile.objects.get(user=request.user)
+        if follow_delete:
+            Follow.objects.get(follower=request.user, followed=user).delete()
+            profile.follows.remove(user)
+        else:
+            Follow.objects.create(follower=request.user, followed=user)
+            profile.follows.add(user)
+
+        profile.save()
+        return redirect('author', pk=pk)
+
+
+
+
+################
+##  DM
+################
 class DMIndexView(CustomLoginRequiredMixin, View):
     template_name = 'dm/index.html'
 

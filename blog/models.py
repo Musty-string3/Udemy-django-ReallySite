@@ -1,4 +1,6 @@
+from typing import Any
 from django.db import models
+from django.conf import settings
 from django.contrib.auth import get_user_model
 
 CHARGE_TYPE = (
@@ -22,7 +24,7 @@ class ArticleTag(models.Model):
 class Article(models.Model):
     title = models.CharField(verbose_name='タイトル', default='タイトルです。', max_length=30, null=False, blank=False)
     text = models.TextField(verbose_name='テキスト', default='テキストです。', max_length=255, null=False, blank=False)
-    author = models.ForeignKey(get_user_model(), verbose_name='作成者', on_delete=models.CASCADE)
+    author = models.ForeignKey(get_user_model(), verbose_name='作成者', on_delete=models.CASCADE, related_name='articles')
     tags = models.ManyToManyField(ArticleTag, verbose_name='タグ', related_name='articles')
     is_public = models.BooleanField(verbose_name='公開', default=False)
     sell_flag = models.BooleanField(verbose_name='記事を販売', default=False)
@@ -120,3 +122,17 @@ class ViewCount(models.Model):
             cls.objects.get_or_create(user=user, article=article)
         view_count = cls.objects.filter(article=article).count()
         return view_count
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(get_user_model(), verbose_name="フォローしたユーザー", related_name='following', on_delete=models.CASCADE)
+    followed = models.ForeignKey(get_user_model(), verbose_name="フォローされたユーザー", related_name='followers', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = 'フォロー'
+        db_table = 'user_follow'
+        unique_together = ('follower', 'followed')
+
+    # def __init__(self):
+    #     return f'{self.follower} follows {self.followed}'

@@ -119,6 +119,7 @@ class MypageView(CustomLoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         profile_form = ProfileForm(request.POST, request.FILES)
         user_image = request.user.profile.image.url
+
         if profile_form.is_valid():
             profile = profile_form.save(user_image, commit=False)
             profile.user = request.user
@@ -152,9 +153,22 @@ class AuthorView(CustomLoginRequiredMixin, View):
             view_total_count=Count('view_count'),
         )
 
+        # フォローしているか？
+        try:
+            follow = Follow.objects.get(follower=request.user, followed=user)
+        except Follow.DoesNotExist:
+            follow = False
+
+        follows_count = user.profile.follows.all().count()
+        # followed_byはUserモデルに適用される（逆参照）
+        followed_count = user.followed_by.all().count()
+
         return render(request, self.template_name, {
             'user': user,
             'public_artiles': public_artiles,
+            'follow': follow,
+            'follows_count': follows_count,
+            'followed_count': followed_count,
         })
 
 

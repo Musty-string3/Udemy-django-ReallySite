@@ -1,0 +1,51 @@
+{% extends 'mysite/base.html' %}
+
+{% load static %}
+
+{% block content %}
+<main class="container">
+    <div class="row">
+        <div class="col-md-8 m-auto">
+            <h4 class="text-center mb-3">{{ title }}</h4>
+            {% if follower %}
+            <ul class="list-group list-group-flush">
+                {% for user in follower %}
+                <li class="list-group-item">
+                    <div class="d-flex">
+                        <a href="{% url 'author' pk=user.id %}" class="d-flex text-decoration-none text-dark">
+                            <img src="{{ user.profile.image.url }}" class="profile_author_image rounded-circle border border-secondary">
+                            <h5 class="mt-2 ms-2">{{ user.profile.username }}</h5>
+                        </a>
+                        <div class="ms-3 mt-2">
+                            <span class="me-3 ">フォロー中 {{ user.profile.follows.all.count }}</span>
+                            <span class="me-3 ">フォロワー {{ user.followed_by.all.count }}</span>
+                            <span class="me-3 ">投稿数 {{ user.articles.all.count }}</span>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <ul class="list-group list-group-flush">
+                {% for profile in followed_by %}
+                    <li class="list-group-item">
+                        <div class="d-flex">
+                            <a href="{% url 'author' pk=profile.user.id %}" class="d-flex text-decoration-none text-dark">
+                                <img src="{{ profile.image.url }}" class="profile_author_image rounded-circle border border-secondary">
+                                <h5 class="mt-2 ms-2">{{ profile.username }}</h5>
+                            </a>
+                            <div class="ms-3 mt-2">
+                                <span class="me-3 ">フォロー中 {{ profile.follows.all.count }}</span>
+                                <span class="me-3 ">フォロワー {{ profile.user.followed_by.all.count }}</span>
+                                <span class="me-3 ">投稿数 {{ profile.user.articles.all.count }}</span>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</main>
+
+{% endblock %}
