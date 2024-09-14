@@ -1,3 +1,5 @@
+import os
+
 from typing import Any
 from django.db import models
 from django.conf import settings
@@ -7,6 +9,11 @@ CHARGE_TYPE = (
     (0, '課金なし'),
     (1, 'クレジットカード決済'),
 )
+
+def upload_article_image_to(instance, filename):
+    user_id = str(instance.user.id)
+    return os.path.join('article', 'images', user_id, filename)
+
 
 class ArticleTag(models.Model):
     slug = models.CharField(verbose_name='SLUG', unique=True, max_length=20, primary_key=True)
@@ -21,14 +28,26 @@ class ArticleTag(models.Model):
     def __str__(self):
         return self.name
 
+
+class Image(models.Model):
+    image = models.ImageField(verbose_name='投稿画像', upload_to=upload_article_image_to)
+    created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
+
+    class Meta:
+        verbose_name_plural = '投稿画像'
+        db_table = 'article_image'
+
+
 class Article(models.Model):
     title = models.CharField(verbose_name='タイトル', default='タイトルです。', max_length=30, null=False, blank=False)
+    images = models.ForeignKey(Image, verbose_name="投稿画像", on_delete=models.CASCADE, blank=True, null=True)
     text = models.TextField(verbose_name='テキスト', default='テキストです。', max_length=255, null=False, blank=False)
     author = models.ForeignKey(get_user_model(), verbose_name='作成者', on_delete=models.CASCADE, related_name='articles')
     tags = models.ManyToManyField(ArticleTag, verbose_name='タグ', related_name='articles')
     is_public = models.BooleanField(verbose_name='公開', default=False)
     sell_flag = models.BooleanField(verbose_name='記事を販売', default=False)
-    price = models.IntegerField(verbose_name='価格', default=0)
+    price = models.IntegerField(verbose_name='価格', default=0, blank=True, null=True)
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
