@@ -28,20 +28,8 @@ class ArticleTag(models.Model):
     def __str__(self):
         return self.name
 
-
-class Image(models.Model):
-    image = models.ImageField(verbose_name='投稿画像', upload_to=upload_article_image_to)
-    created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
-    updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
-
-    class Meta:
-        verbose_name_plural = '投稿画像'
-        db_table = 'article_image'
-
-
 class Article(models.Model):
     title = models.CharField(verbose_name='タイトル', default='タイトルです。', max_length=30, null=False, blank=False)
-    images = models.ForeignKey(Image, verbose_name="投稿画像", on_delete=models.CASCADE, blank=True, null=True)
     text = models.TextField(verbose_name='テキスト', default='テキストです。', max_length=255, null=False, blank=False)
     author = models.ForeignKey(get_user_model(), verbose_name='作成者', on_delete=models.CASCADE, related_name='articles')
     tags = models.ManyToManyField(ArticleTag, verbose_name='タグ', related_name='articles')
@@ -57,6 +45,21 @@ class Article(models.Model):
 
     def __str__(self):
         return self.title
+
+
+
+class Image(models.Model):
+    image = models.ImageField(verbose_name='投稿画像', upload_to=upload_article_image_to)
+    article = models.ForeignKey(Article, verbose_name="記事", on_delete=models.CASCADE, default='')
+    created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
+
+
+    class Meta:
+        verbose_name_plural = '投稿画像'
+        db_table = 'article_image'
+
+
 
 class Comment(models.Model):
     comment = models.TextField(verbose_name='コメント', max_length='500')
