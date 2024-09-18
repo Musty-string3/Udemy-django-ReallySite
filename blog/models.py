@@ -11,7 +11,7 @@ CHARGE_TYPE = (
 )
 
 def upload_article_image_to(instance, filename):
-    user_id = str(instance.user.id)
+    user_id = str(instance.article.author.id)
     return os.path.join('article', 'images', user_id, filename)
 
 

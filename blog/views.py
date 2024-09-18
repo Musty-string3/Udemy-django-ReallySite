@@ -60,7 +60,7 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
 ##  記事の作成
 ################
 class ArticleNewView(CustomLoginRequiredMixin, View):
-    template_name = 'mysite/blog_new.html'
+    template_name = 'blog/blog_new.html'
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {
@@ -70,11 +70,15 @@ class ArticleNewView(CustomLoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         article_new_form = ArticleNewForm(request.POST)
         print('request.POST.get', request.POST.get)
+        images = request.FILES.getlist('images')
 
         if article_new_form.is_valid():
             # forms.pyの中でタグの設定などの処理を行う
             form = article_new_form.save(request.user, commit=False)
             form.save()
+            # 複数画像の保存
+            for image in images:
+                Image.objects.create(article=form, image=image)
 
             messages.success(request, '記事を作成しました。')
             return redirect('blog:detail', form.id)
@@ -152,7 +156,7 @@ class ArticleDetailView(CustomLoginRequiredMixin, View):
 ##  記事の編集
 ################
 class ArticleEditView(CustomLoginRequiredMixin, View):
-    template_name = 'mysite/blog_new.html'
+    template_name = 'blog/blog_new.html'
 
     def get(self, request, pk, *args, **kwargs):
         article = Article.objects.get(pk=pk)

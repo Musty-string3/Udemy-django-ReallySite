@@ -14,6 +14,7 @@ class ArticleNewForm(forms.ModelForm):
     # ?リンク先 https://zenn.dev/cococig/articles/d3374aa8fd70b0
 
     tags = forms.CharField(label="タグ", max_length=250, required=False)
+
     class Meta:
         model = Article
         fields = (
@@ -27,7 +28,6 @@ class ArticleNewForm(forms.ModelForm):
     def clean_tags(self):
         # is_valid()が呼び出された時に処理が走る
         tags = self.cleaned_data['tags']
-
         # カンマで区切られたタグをリストに変換
         tag_list = [tag.strip() for tag in tags.split('、') if tag.strip()]
 
