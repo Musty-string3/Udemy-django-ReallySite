@@ -34,7 +34,7 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
             view_total_count=Count('view_count'),
         ).order_by('-created_at')
         # 1ページの記事の表示を変更
-        paginator = Paginator(articles, 3).get_page(page_number)
+        paginator = Paginator(articles, 20).get_page(page_number)
 
         # 決済未完了のorderを取得
         orders = Order.objects.filter(user=request.user, order_status=0)

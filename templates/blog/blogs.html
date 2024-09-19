@@ -9,12 +9,11 @@
                 {{ page_title }}
             </h3>
 
-            {% for article in paginator_articles %}
-                <div class="blog-post">
+            <div class="card-deck row row-cols-1 row-cols-md-2 g-4">
+                {% for article in paginator_articles %}
                     {% include "snippets/articles_index.html" %}
-                </div>
-                <hr>
-            {% endfor %}
+                {% endfor %}
+            </div>
 
             {% comment %} ページネーション {% endcomment %}
             {% include "snippets/pagination.html" %}
