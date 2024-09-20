@@ -50,7 +50,7 @@ class Article(models.Model):
 
 class Image(models.Model):
     image = models.ImageField(verbose_name='投稿画像', upload_to=upload_article_image_to)
-    article = models.ForeignKey(Article, verbose_name="記事", on_delete=models.CASCADE, default='')
+    article = models.ForeignKey(Article, verbose_name="記事", on_delete=models.CASCADE, default='', related_name='image')
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
