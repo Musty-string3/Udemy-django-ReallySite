@@ -24,7 +24,7 @@ class TopView(View):
             like_count=Count('article_like'),
             comment_count=Count('comments'),
             view_total_count=Count('view_count'),
-            ).order_by('-created_at')[:3]
+            ).order_by('-created_at')[:4]
 
         popular_articles = Article.objects.filter(is_public=True).annotate(
             like_count=Count('article_like'),
@@ -111,9 +111,21 @@ class MypageView(CustomLoginRequiredMixin, View):
             view_total_count=Count('view_count'),
         )
 
+        true_public_artiles = Article.objects.filter(author=request.user, is_public=True).annotate(
+            like_count=Count('article_like'),
+            comment_count=Count('comments'),
+            view_total_count=Count('view_count'),
+        )
+
+        follows_count = request.user.profile.follows.count()
+        followed_count = request.user.followed_by.count()
+
         return render(request, self.template_name, {
             'prefecture_choices': PREFECTURE_CHOICE,
             'false_public_artiles': false_public_artiles,
+            'true_public_artiles': true_public_artiles,
+            'follows_count': follows_count,
+            'followed_count': followed_count,
         })
 
     def post(self, request, *args, **kwargs):

@@ -1,4 +1,4 @@
-<div class="col">
+<div class="col-lg-4 col-md-6 col">
     <div class="card h-100" id="article-card-{{ article.id }}" style="display:none;">
         <a href="{% url 'blog:detail' article.id %}">
             <div id="carouselIndicators{{ article.id }}" class="carousel slide" data-bs-ride="carousel">
@@ -113,5 +113,5 @@
         document.querySelectorAll('[id^="article-card-"]').forEach(function(el) {
             el.style.display = 'block';
         });
-    }, 2000);
+    }, 1000);
 </script>

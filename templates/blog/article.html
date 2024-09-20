@@ -8,12 +8,18 @@
         <div class="col-md-8">
 
             {% comment %} {% cache 86400 article article.id %} {% endcomment %}
+            <div class="d-flex mb-3">
+                <img src="{{ article.author.profile.image.url }}" alt="" class="article_profile_image rounded-circle border border-secondary">
+                <h5 class="mt-1 ms-2">{{ article.author.profile.username }}</h5>
+            </div>
+            {% for image in article.image.all %}
+            <img src="{{ image.image.url }}" class="img-thumbnail">
+            {% endfor %}
             <h3 class="pb-4 display-5 font-italic">
                 {{ article.title }}
             </h3>
             <p class="small text-muted text-right">
                 {{ article.created_at }}
-                {{ article.author }}
                 {% if article.is_public %}
                     公開中
                 {% else %}
@@ -45,7 +51,8 @@
                 {% endif %}
             </div>
 
-            <hr class="my-4">
+            <hr class="my-2">
+            {% comment %} コメント機能 {% endcomment %}
             {% include "snippets/comment.html" %}
         </div>
 

@@ -23,20 +23,7 @@
         <div class="col-md-6">
             <div class="row g-0 border rounded overflow-hidden flex-md-row 
             mb-4 shadow-sm h-md-250 position-relative">
-                <div class="col p-4 d-flex flex-column position-static">
-                    <strong class="d-inline-block mb-2 text-primary">Django</strong>
-                    <h3 class="mb-2">{{ article.title }}</h3>
-                    <div class="mb-1 text-muted">{{ article.created_at }}</div>
-                    <p class="card-text mb-auto">{{ article.text }}</p>
-                    <div class="d-flex">
-                        <i class="bi bi-suit-heart mb-1 me-1"></i>
-                        {{ article.like_count }}
-                        <i class="ms-1 bi bi-chat-left-dots mb-2 me-1"></i>
-                        {{ article.comment_count }}
-                        <p class="ms-1">閲覧数 {{ article.view_total_count }}</p>
-                    </div>
-                    <a href="{% url 'blog:detail' article.id %}" class="None-stretched-link">続きを読む</a>
-                </div>
+                {% include "snippets/articles_index.html" %}
             </div>
         </div>
         {% endfor %}
@@ -49,15 +36,14 @@
             <h3 class="pb-4 font-italic border-bottom">
                 最新記事TOP3
             </h3>
-            {% for article in last_three_articles %}
-                <div class="blog-post">
+            <div class="card-deck row row-cols-1 row-cols-md-2 g-4 mb-3">
+                {% for article in last_three_articles %}
                     {% include "snippets/articles_index.html" %}
-                </div>
-                <hr>
-            {% endfor %}
+                {% endfor %}
+            </div>
             <nav class="blog-pagination">
-                <a class="btn btn-outline-primary" href="{{ blog_index }}">ブログ一覧はこちら</a>
-                <a class="btn btn-outline-primary" href="{% url 'blog:new' %}">新しい記事</a>
+                <a class="btn btn-outline-primary me-2" href="{{ blog_index }}">ブログ一覧はこちら</a>
+                <a class="btn btn-outline-info" href="{% url 'blog:new' %}">新しい記事の作成</a>
             </nav>
         </div>
         {% comment %} サイドバー {% endcomment %}
