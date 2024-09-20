@@ -165,6 +165,7 @@ class ArticleEditView(CustomLoginRequiredMixin, View):
 
         return render(request, self.template_name, {
             'title': 'ブログ編集',
+            'article': article,
             'article_title': article.title,
             'article_text': article.text,
             'tags': tag_string,

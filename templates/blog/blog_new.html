@@ -4,13 +4,23 @@
 <div class="container">
     <div class="row">
         <h3 class="text-center">{{ title }}</h3>
-        <div class="col-10 m-auto">
+        <div class="col-lg-10 col-md-12 m-auto">
             <form action="{{ request.path }}" method="post" enctype='multipart/form-data'>
                 {% csrf_token %}
                 {{ article_new_form.errors }}
                 <div class="mb-3">
+                    {% if title == 'ブログ編集' %}
+                    <label for="InputImage" class="form-label">現在の投稿画像</label>
+                    <div class="row">
+                        {% for image in article.image.all %}
+                        <div class="col-lg-4 col-md-6 col-12 mb-3">
+                            <img src="/media/{{ image.image }}" alt="現在の画像" class="img-thumbnail h-100 w-100" width="200px">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     <label for="InputImage" class="form-label">投稿画像</label>
-                    <input type="file" accept='image/*' name="images" class="form-control" id="InputImage" required autofocus multiple>
+                    <input type="file" accept='image/*' name="images" class="form-control" id="InputImage" autofocus multiple>
                 </div>
 
                 <div class="mb-3">

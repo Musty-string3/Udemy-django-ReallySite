@@ -17,16 +17,17 @@
     </div>
     <div class="row mb-2">
         <div class="col-12 m-auto text-center">
-            <h3 class="shadow pb-2 pt-2 mb-3 bg-body-tertiary rounded">人気記事TOP2</h3>
+            <h3 class="shadow pb-2 pt-2 mb-3 bg-body-tertiary rounded">人気記事TOP3</h3>
         </div>
-        {% for article in popular_articles %}
-        <div class="col-md-6">
-            <div class="row g-0 border rounded overflow-hidden flex-md-row 
-            mb-4 shadow-sm h-md-250 position-relative">
-                {% include "snippets/articles_index.html" %}
+        <div class="col-lg-11 col-md-10 col-12 m-auto">
+            <div class="card-deck row row-cols-1 row-cols-md-2 g-4 mb-3">
+            {% for article in popular_articles %}
+                <div class="col-lg-4 col-md-6 col-12">
+                    {% include "snippets/articles_index.html" %}
+                </div>
+                {% endfor %}
             </div>
         </div>
-        {% endfor %}
     </div>
 </div>
 
@@ -34,11 +35,13 @@
     <div class="row">
         <div class="col-md-8">
             <h3 class="pb-4 font-italic border-bottom">
-                最新記事TOP3
+                最新記事TOP5
             </h3>
             <div class="card-deck row row-cols-1 row-cols-md-2 g-4 mb-3">
                 {% for article in last_three_articles %}
+                <div class="col-lg-4 col-md-6 col-12">
                     {% include "snippets/articles_index.html" %}
+                </div>
                 {% endfor %}
             </div>
             <nav class="blog-pagination">

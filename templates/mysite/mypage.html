@@ -69,26 +69,36 @@
             </form>
             <hr>
             <div class="row">
-                <h4 class="mb-2">公開中の記事</h4>
+                {% if true_public_artiles %}
+                <h4 class="mb-2 text-center">公開中の記事</h4>
                 <div class="card-deck row row-cols-1 row-cols-md-2 g-4 mb-3">
                     {% for article in true_public_artiles %}
+                    <div class="col-lg-4 col-md-6 col">
                         {% include "snippets/articles_index.html" %}
+                    </div>
                     {% endfor %}
                 </div>
+                {% else %}
+                <h4 class="m-3 text-center">投稿はありません</h4>
+                {% endif %}
 
                 {% comment %} 非公開中の記事の参照 {% endcomment %}
+                {% if false_public_artiles %}
                 <p><a class="btn btn-primary" data-bs-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">非公開中の記事を見る</a></p>
                 <div class="row">
                     <div class="col">
                         <div class="collapse multi-collapse" id="multiCollapseExample1">
                             <div class="card-deck row row-cols-1 row-cols-md-2 g-4 mb-3">
                                 {% for article in false_public_artiles %}
-                                {% include "snippets/articles_index.html" %}
+                                <div class="col-lg-4 col-md-6 col">
+                                    {% include "snippets/articles_index.html" %}
+                                </div>
                                 {% endfor %}
                             </div>
                         </div>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>

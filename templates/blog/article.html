@@ -8,28 +8,37 @@
         <div class="col-md-8">
 
             {% comment %} {% cache 86400 article article.id %} {% endcomment %}
-            <div class="d-flex mb-3">
+            {% comment %} カルセール {% endcomment %}
+            <div id="carouselIndicators{{ article.id }}" class="carousel slide carousel-fade col-10" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                    {% for / in article.image.all %}
+                    <button type="button" data-bs-target="#carouselIndicators{{ article.id }}" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %} pt-1" aria-current="{% if forloop.first %}true{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
+                    {% endfor %}
+                </div>
+                <div class="carousel-inner">
+                    {% for image in article.image.all %}
+                    <div class="carousel-item {% if forloop.first %}active{% endif %}" data-bs-interval="10000000000">
+                        <img src="/media/{{ image.image }}" class="w-100 article_image img-thumbnail" alt="...">
+                    </div>
+                    {% endfor %}
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselIndicators{{ article.id }}" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon btn btn-outline-dark rounded-circle p-4" aria-hidden="true"></span>
+                    <span class="visually-hidden"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselIndicators{{ article.id }}" data-bs-slide="next">
+                    <span class="carousel-control-next-icon btn btn-outline-dark rounded-circle p-4" aria-hidden="true"></span>
+                    <span class="visually-hidden"></span>
+                </button>
+            </div>
+            {% comment %} カルセールここまで {% endcomment %}
+            <div class="d-flex mb-2 mt-2">
                 <img src="{{ article.author.profile.image.url }}" alt="" class="article_profile_image rounded-circle border border-secondary">
                 <h5 class="mt-1 ms-2">{{ article.author.profile.username }}</h5>
             </div>
-            {% for image in article.image.all %}
-            <img src="{{ image.image.url }}" class="img-thumbnail">
-            {% endfor %}
-            <h3 class="pb-4 display-5 font-italic">
+            <h3 class="display-5 font-italic">
                 {{ article.title }}
             </h3>
-            <p class="small text-muted text-right">
-                {{ article.created_at }}
-                {% if article.is_public %}
-                    公開中
-                {% else %}
-                    非公開中
-                {% endif %}
-                {% if request.user == article.author %}
-                <a href="{% url 'blog:edit' article.id %}" class="btn btn-info">編集</a>
-                <a href="{% url 'blog:delete' article.id %}" class="btn btn-danger ms-3" onclick="return delete_article_alert(this);">削除</a>
-                {% endif %}
-            </p>
             <p>{{ article.text }}</p>
             {% comment %} {% endcache %} {% endcomment %}
             {% include "snippets/like.html" %}
@@ -50,6 +59,18 @@
                 無料
                 {% endif %}
             </div>
+            <p class="small text-muted text-right mt-1">
+                {{ article.created_at }}
+                {% if article.is_public %}
+                    公開中
+                {% else %}
+                    非公開中
+                {% endif %}
+                {% if request.user == article.author %}
+                <a href="{% url 'blog:edit' article.id %}" class="btn btn-info">編集</a>
+                <a href="{% url 'blog:delete' article.id %}" class="btn btn-danger ms-3" onclick="return delete_article_alert(this);">削除</a>
+                {% endif %}
+            </p>
 
             <hr class="my-2">
             {% comment %} コメント機能 {% endcomment %}

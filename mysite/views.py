@@ -16,7 +16,7 @@ from mysite.models.profile_models import PREFECTURE_CHOICE
 
 
 class TopView(View):
-    template_name = 'mysite/index.html'
+    template_name = 'mysite/top.html'
 
     def get(self, request, *args, **kwargs):
         # 人気記事TOP3を取得
@@ -24,13 +24,13 @@ class TopView(View):
             like_count=Count('article_like'),
             comment_count=Count('comments'),
             view_total_count=Count('view_count'),
-            ).order_by('-created_at')[:4]
+            ).order_by('-created_at')[:5]
 
         popular_articles = Article.objects.filter(is_public=True).annotate(
             like_count=Count('article_like'),
             comment_count=Count('comments'),
             view_total_count=Count('view_count'),
-            ).order_by('-like_count')[:2]
+            ).order_by('-like_count')[:3]
 
         # 決済未完了のorderを取得
         orders = Order.objects.filter(user=request.user, order_status=0)
