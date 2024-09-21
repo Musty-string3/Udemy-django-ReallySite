@@ -5,32 +5,48 @@
     <div class="row">
         <h3 class="text-center">{{ title }}</h3>
         <div class="col-lg-10 col-md-12 m-auto">
-            <form action="{{ request.path }}" method="post" enctype='multipart/form-data'>
+            <form action="{{ request.path }}" method="post" enctype='multipart/form-data' class="needs-validated">
                 {% csrf_token %}
-                {{ article_new_form.errors }}
+
+                <div class="error-messages">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item text-danger">{{ article_new_form.errors }}</li>
+                    </ul>
+                </div>
+
                 <div class="mb-3">
                     {% if title == 'ブログ編集' %}
-                    <label for="InputImage" class="form-label">現在の投稿画像</label>
-                    <div class="row">
-                        {% for image in article.image.all %}
-                        <div class="col-lg-4 col-md-6 col-12 mb-3">
-                            <img src="/media/{{ image.image }}" alt="現在の画像" class="img-thumbnail h-100 w-100" width="200px">
+                        <label for="InputImage" class="form-label">現在の投稿画像</label>
+                        <div class="row">
+                            {% for image in article.image.all %}
+                            <div class="col-lg-4 col-md-6 col-12 mb-3">
+                                <img src="/media/{{ image.image }}" alt="現在の画像" class="img-thumbnail h-100 w-100" width="200px">
+                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
-                    </div>
                     {% endif %}
                     <label for="InputImage" class="form-label">投稿画像</label>
-                    <input type="file" accept='image/*' name="images" class="form-control" id="InputImage" autofocus multiple>
-                </div>
+                    {% if title == 'ブログ編集' %}
+                        <input type="file" accept='image/*' name="images" class="form-control" id="InputImage" autofocus multiple>
+                    {% else %}
+                        <input type="file" accept='image/*' name="images" class="form-control" id="InputImage" required utofocus multiple>
+                        <div class="invalid-feedback">画像を1枚以上選択してください</div>
+                        {% if image_error %}
+                        <small class="text-danger mt-2 ms-1">{{ image_error }}</small>
+                        {% endif %}
+                        {% endif %}
+                    </div>
 
                 <div class="mb-3">
                     <label for="InputTitle" class="form-label">タイトル</label>
                     <input type="text" name="title" class="form-control" id="InputTitle" placeholder="タイトル" value="{{ article_title }}" required>
+                    <div class="invalid-feedback">タイトルを入力してください</div>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">テキスト</label>
                     <textarea class="form-control" id='id_text' name="text" rows='4' required>{{ article_text|default:'' }}</textarea>
+                    <div class="invalid-feedback">テキストを入力してください</div>
                 </div>
 
                 <div class="mb-3">
@@ -53,7 +69,7 @@
 
                 <div class="mb-3" id="priceInputContainer" style="display: none;">
                     <label for="InputPrice" class="form-label">金額</label>
-                    <input type="text" name="price" class="form-control" id="InputPrice" placeholder="金額" value="{{ article_price }}" aria-describedby="priceHelp">
+                    <input type="number" name="price" class="form-control" id="InputPrice" placeholder="金額" value="{{ article_price }}" aria-describedby="priceHelp">
                     <div id="priceHelp" class="form-text">500円の場合は「500」と入力</div>
                 </div>
 

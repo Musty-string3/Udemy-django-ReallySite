@@ -7,7 +7,7 @@ from django.conf import settings
 
 def upload_image_to(instance, filename):
     user_id = str(instance.user.id)
-    return os.path.join('images', user_id, filename)
+    return os.path.join('profile_images', user_id, filename)
 
 PREFECTURE_CHOICE = (
     (0, '選択なし'),

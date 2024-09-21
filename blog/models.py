@@ -11,8 +11,9 @@ CHARGE_TYPE = (
 )
 
 def upload_article_image_to(instance, filename):
-    user_id = str(instance.article.author.id)
-    return os.path.join('article', 'images', user_id, filename)
+    user_id = 'UserID:' + str(instance.article.author.id)
+    article_id = 'ArticleID:' + str( instance.article.id)
+    return os.path.join('article', 'images', user_id, article_id, filename)
 
 
 class ArticleTag(models.Model):

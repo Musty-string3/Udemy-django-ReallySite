@@ -70,9 +70,12 @@ class ArticleNewView(CustomLoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         article_new_form = ArticleNewForm(request.POST)
         print('request.POST.get', request.POST.get)
-        images = request.FILES.getlist('images')
+        images = request.FILES.getlist('images', None)
+        context = {
+            'article_new_form': article_new_form,
+        }
 
-        if article_new_form.is_valid():
+        if article_new_form.is_valid() and images:
             # forms.pyの中でタグの設定などの処理を行う
             form = article_new_form.save(request.user, commit=False)
             form.save()
@@ -83,11 +86,12 @@ class ArticleNewView(CustomLoginRequiredMixin, View):
             messages.success(request, '記事を作成しました。')
             return redirect('blog:detail', form.id)
         else:
-            messages.error(request, f'記事の作成に失敗しました。\n{request.POST.get}')
+            messages.error(request, '記事の作成に失敗しました。')
+            if not images:
+                image_error = '画像を1枚以上選択してください'
+                context['image_error'] = image_error
 
-        return render(request, self.template_name, {
-            'article_new_form': article_new_form,
-        })
+        return render(request, self.template_name, context)
 
 
 ################
@@ -177,19 +181,28 @@ class ArticleEditView(CustomLoginRequiredMixin, View):
     def post(self, request, pk, *args, **kwargs):
         article = Article.objects.get(pk=pk)
         article_new_form = ArticleNewForm(request.POST, instance=article)
-        print('request.POST.get', request.POST.get)
+        images = request.FILES.getlist('images', None)
 
         if article_new_form.is_valid():
             # forms.pyの中でタグの設定などの処理を行う
             form = article_new_form.save(request.user, commit=False)
             form.save()
+            if images:
+                # 既存の画像のファイルを削除
+                existing_images = Image.objects.filter(article=article)
+                for image in existing_images:
+                    # メディアフォルダのファイルを削除
+                    image.image.delete(save=False)
+                existing_images.delete()
+                for image in images:
+                    Image.objects.create(article=form, image=image)
 
-            messages.success(request, '記事を作成しました。')
+            messages.success(request, '記事を編集しました。')
             return redirect('blog:detail', form.id)
         else:
             article_new_form = ArticleNewForm(instance=article)
             tags = request.POST.get('tags')
-            messages.error(request, '記事の作成に失敗しました。')
+            messages.error(request, '記事の編集に失敗しました。')
 
         return render(request, self.template_name, {
             'article_new_form': article_new_form,
@@ -209,8 +222,14 @@ class ArticleEditView(CustomLoginRequiredMixin, View):
 class ArticleDeleteView(CustomLoginRequiredMixin, View):
     def get(self, request, pk, *args, **kwargs):
         try:
-            Article.objects.get(pk=pk).delete()
+            article = Article.objects.get(pk=pk)
+            # メディアの画像も一緒に削除
+            for image in article.image.all():
+                image.image.delete(save=False)
+            article.delete()
+
             messages.success(request, '記事を削除しました。')
+
         except Article.DoesNotExist:
             messages.error(request, '記事の削除に失敗しました。')
         return redirect('blog:index')

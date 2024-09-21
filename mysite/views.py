@@ -20,17 +20,11 @@ class TopView(View):
 
     def get(self, request, *args, **kwargs):
         # 人気記事TOP3を取得
-        last_three_articles = Article.objects.filter(is_public=True).annotate(
-            like_count=Count('article_like'),
-            comment_count=Count('comments'),
-            view_total_count=Count('view_count'),
-            ).order_by('-created_at')[:5]
-
         popular_articles = Article.objects.filter(is_public=True).annotate(
             like_count=Count('article_like'),
             comment_count=Count('comments'),
             view_total_count=Count('view_count'),
-            ).order_by('-like_count')[:3]
+            ).order_by('-like_count')[:4]
 
         # 決済未完了のorderを取得
         orders = Order.objects.filter(user=request.user, order_status=0)
@@ -44,7 +38,6 @@ class TopView(View):
 
         return render(request, self.template_name, {
             'title': 'Really Site',
-            'last_three_articles': last_three_articles,
             'popular_articles': popular_articles,
             'purchased_article_ids': purchased_article_ids,
             'uset_item_ids': uset_item_ids,
