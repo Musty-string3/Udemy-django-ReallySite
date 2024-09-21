@@ -23,7 +23,7 @@ from django.http import JsonResponse
 ##  記事の一覧
 ################
 class ArticleIndexView(CustomLoginRequiredMixin, View):
-    template_name = 'blog/blogs.html'
+    template_name = 'mysite/blog/blogs.html'
 
     def get(self, request, *args, **kwargs):
         page_number = request.GET.get('page')
@@ -60,7 +60,7 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
 ##  記事の作成
 ################
 class ArticleNewView(CustomLoginRequiredMixin, View):
-    template_name = 'blog/blog_new.html'
+    template_name = 'mysite/blog/blog_new.html'
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {
@@ -98,7 +98,7 @@ class ArticleNewView(CustomLoginRequiredMixin, View):
 ##  記事の詳細
 ################
 class ArticleDetailView(CustomLoginRequiredMixin, View):
-    template_name = 'blog/article.html'
+    template_name = 'mysite/blog/article.html'
 
     def get(self, request, pk, *args, **kwargs):
         article = Article.objects.get(pk=pk)
@@ -160,7 +160,7 @@ class ArticleDetailView(CustomLoginRequiredMixin, View):
 ##  記事の編集
 ################
 class ArticleEditView(CustomLoginRequiredMixin, View):
-    template_name = 'blog/blog_new.html'
+    template_name = 'mysite/blog/blog_new.html'
 
     def get(self, request, pk, *args, **kwargs):
         article = Article.objects.get(pk=pk)
@@ -239,7 +239,7 @@ class ArticleDeleteView(CustomLoginRequiredMixin, View):
 ##  タグ
 ################
 class ArticleTagView(CustomLoginRequiredMixin, View):
-    template_name = 'blog/blogs.html'
+    template_name = 'mysite/blog/blogs.html'
 
     def get(self, request, name, *args, **kwargs):
         page_number = request.GET.get('page')
@@ -310,6 +310,26 @@ class ArticleLikeView(CustomLoginRequiredMixin, View):
             pass
 
         return JsonResponse(context)
+
+################
+##  検索機能
+################
+
+class SearchView(View):
+    template_name = 'mysite/search.html'
+    def get(self, request, *args, **kwargs):
+
+        return render(request, self.template_name, {
+
+        })
+
+    def post(self, request, *args, **kwargs):
+        template_name = 'mysite/search.html'
+        context = {
+
+        }
+
+        return render(request, self.template_name, context)
 
 
 
@@ -456,7 +476,7 @@ class FollowView(CustomLoginRequiredMixin, View):
 
     # フォロー一覧画面
     def get(self, request, pk, *args, **kwargs):
-        template_name = 'follow/follows.html'
+        template_name = 'mysite/follow/follows.html'
 
         follower = request.GET.get('follower', None)
 
@@ -513,7 +533,7 @@ class FollowView(CustomLoginRequiredMixin, View):
 ##  DM
 ################
 class DMIndexView(CustomLoginRequiredMixin, View):
-    template_name = 'dm/index.html'
+    template_name = 'mysite/dm/index.html'
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name, {
@@ -526,7 +546,7 @@ class DMIndexView(CustomLoginRequiredMixin, View):
         })
 
 class DMDetailView(CustomLoginRequiredMixin, View):
-    template_name = 'dm/detail.html'
+    template_name = 'mysite/dm/detail.html'
 
     def get(self, request, pk, *args, **kwargs):
         return render(request, self.template_name, {

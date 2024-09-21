@@ -13,7 +13,7 @@ from common.myiste_def import *
 
 
 class PayView(CustomLoginRequiredMixin, View):
-    template_name = 'demo/pay.html'
+    template_name = 'mysite/demo/pay.html'
     payjp.api_key = os.environ['PAYJP_SECRET_KEY']
     public_key = os.environ['PAYJP_PUBLIC_KEY']
     amount = 1000
@@ -48,7 +48,7 @@ class PayView(CustomLoginRequiredMixin, View):
 # @method_decorator(cache_page(30), name='dispatch')
 # @method_decoratorを使って、cache_pageデコレータをdispatchメソッドに適用
 class CacheTestView(CustomLoginRequiredMixin, View):
-    template_name = 'demo/cache_test.html'
+    template_name = 'mysite/demo/cache_test.html'
 
     def get(self, request, *args, **kwargs):
         name = request.GET.get('name', None)
