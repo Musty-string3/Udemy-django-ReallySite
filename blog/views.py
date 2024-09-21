@@ -1,21 +1,24 @@
 import os
 import json
 import payjp
+import random
 
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.views import View
 from django.db.models import Count, Sum
-
-from .models import *
-from mysite.models.profile_models import Profile
-from .forms import CommentForm, ArticleNewForm
-from common.myiste_def import *
+from django.db.models import Q
 
 # 非同期処理
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
+
+from .models import *
+from mysite.models.profile_models import Profile
+from .forms import CommentForm, ArticleNewForm, SearchForm
+from common.myiste_def import *
+
 
 
 
@@ -318,15 +321,37 @@ class ArticleLikeView(CustomLoginRequiredMixin, View):
 class SearchView(View):
     template_name = 'mysite/search.html'
     def get(self, request, *args, **kwargs):
+        # ?:作ってみただけ
+        form = SearchForm()
+        context = {}
 
-        return render(request, self.template_name, {
+        search = request.GET.get('search', None)
+        articles = request.GET.get('articles', None)
+        users = request.GET.get('users', None)
 
-        })
+        if search and (articles or users):
+            context['search'] = search
+            context['filter'] = True
+
+        if search and articles:
+            context['articles'] = Article.objects.filter(Q(title__icontains=search) | Q(text__icontains=search))
+        elif search and users:
+            context['users'] = Profile.objects.filter(username__icontains=search)
+
+
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        template_name = 'mysite/search.html'
-        context = {
+        search = request.POST.get('search')
+        articles = Article.objects.filter(Q(title__icontains=search) | Q(text__icontains=search))
+        users = Profile.objects.filter(username__icontains=search)
+        random_number = random.randint(1, 5)
 
+        context = {
+            'search': search,
+            'articles': articles,
+            'users': users,
+            'random_number': random_number,
         }
 
         return render(request, self.template_name, context)

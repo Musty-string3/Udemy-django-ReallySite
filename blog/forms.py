@@ -44,3 +44,14 @@ class ArticleNewForm(forms.ModelForm):
             tag, created = ArticleTag.objects.get_or_create(slug=slug, defaults={'name': tag_name})
             article.tags.add(tag)
         return article
+
+class SearchForm(forms.Form):
+    query = forms.CharField(
+        label='検索',
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'キーワードを入力してください',
+        })
+    )
