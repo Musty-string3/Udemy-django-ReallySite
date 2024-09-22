@@ -12,7 +12,7 @@ from django.db.models import Count
 from blog.models import *
 from mysite.forms import UserCreateForm, ProfileForm
 from common.myiste_def import *
-from mysite.models.profile_models import PREFECTURE_CHOICE
+from mysite.models.profile_models import *
 
 
 class TopView(View):
@@ -123,11 +123,19 @@ class MypageView(CustomLoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         profile_form = ProfileForm(request.POST, request.FILES)
-        user_image = request.user.profile.image.url
+
+        # image.urlを使うとエンコードされるため、strで文字列型にする
+        user_image_url = str(request.user.profile.image)
 
         if profile_form.is_valid():
-            profile = profile_form.save(user_image, commit=False)
+            profile = profile_form.save(request.user, user_image_url, commit=False)
             profile.user = request.user
+
+            # メディアのプロフィール画像を削除
+            profile_image = Profile.objects.get(user=request.user)
+            print('profile_image.image', profile_image.image)
+            profile_image.image.delete(save=False)
+
             profile.save()
             messages.success(request, 'プロフィール情報が更新されました。')
         else:

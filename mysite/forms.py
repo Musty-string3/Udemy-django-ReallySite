@@ -34,11 +34,13 @@ class ProfileForm(forms.ModelForm):
             'is_public',
         )
 
-    def save(self, user_image=None, commit=True):
+    def save(self, user, user_image_url=None, commit=True):
         profile = super().save(commit=False)
+        default_image = f"profile_images/{user.id}/default.png"
+
         # 新しい画像がアップロードされていない場合、既存の画像を保持
-        if self.cleaned_data.get('image') == "images/default.png" and user_image != "images/default.png":
-            profile.image = user_image.replace('media/', '')
+        if self.cleaned_data.get('image') == "images/default.png" and user_image_url != default_image:
+            profile.image = user_image_url.replace(f'media/profile_images/{user.id}', '')
         if commit:
             profile.save()
         return profile

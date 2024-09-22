@@ -19,13 +19,13 @@
                 </div>
             </div>
 
-            <form class="" method="post" enctype='multipart/form-data'>
+            <form method="post" enctype='multipart/form-data'>
                 {% csrf_token %}
 
                 <label for="id_image" class="form-label">プロフィール画像</label>
                 <div class="ms-3 mb-2">
                     <img src="{{ user.profile.image.url }}" alt="" class="col-2 mb-1 profile_image rounded-circle border border-secondary" id="profileImage">
-                    <input type="file" accept='image/*' name="image" class="form-control" id="id_image" required style="display:none;">
+                    <input type="file" accept='image/*' name="image" class="form-control" id="id_image" style="display:none;">
                 </div>
                 <div class="row">
 
@@ -34,9 +34,10 @@
                         <input type="text" class="form-control" id="id_username" name="username" placeholder="ユーザー名" value={{ user.profile.username }}>
                     </div>
 
-                    <div class="col-md-2">
+                    <div class="col-md-2 mb-2">
                         <label class="form-label">郵便番号</label>
-                        <input type="text" class="form-control" id="id_zipcode" name="zipcode" placeholder="1234567" value={{ user.profile.zipcode }}>
+                        <input type="text" pattern="^[0-9]{7}$" aria-describedby="zipcodeHelp" class="form-control" id="id_zipcode" name="zipcode" placeholder="郵便番号" value={% if user.profile.zipcode %}{{ user.profile.zipcode }}{% endif %}>
+                        <div id="zipcodeHelp" class="form-text">例）1234567</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">都道府県</label>
@@ -48,12 +49,12 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">市区町村</label>
-                        <input type="text" class="form-control" id="id_city" name="city" placeholder="市区町村" value={{ user.profile.city }}>
+                        <input type="text" class="form-control" id="id_city" name="city" placeholder="市区町村" value={% if user.profile.city %}{{ user.profile.city }}{% endif %}>
                     </div>
 
                     <div class="col-12 mt-2">
                         <label class="form-label">住所</label>
-                        <input type="text" class="form-control" id="id_address" name="address" placeholder="住所" value={{ user.profile.address }}>
+                        <input type="text" class="form-control" id="id_address" name="address" placeholder="住所" value={% if user.profile.address %}{{ user.profile.address }}{% endif %}>
                     </div>
 
                     <div class="col-12 ms-3 mt-3 form-check">
