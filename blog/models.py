@@ -159,16 +159,15 @@ class Follow(models.Model):
 
 
 
+ACTION_TYPE = (
+    ('new_registration', 'New_registration'),
+    ('comment', 'Comment'),
+    ('like', 'Like'),
+    ('follow', 'Follow'),
+    ('purchase', 'Purchase'),
+)
+
 class Notification(models.Model):
-
-    ACTION_TYPE = (
-        ('comment', 'Comment'),
-        ('like', 'Like'),
-        ('follow', 'Follow'),
-        ('purchase', 'Purchase'),
-        ('new_registration', 'New_registration'),
-    )
-
     user = models.ForeignKey(get_user_model(), verbose_name="通知を受け取るユーザー", on_delete=models.CASCADE, related_name="notifications", db_index=True)
     sender = models.ForeignKey(get_user_model(), verbose_name="通知したユーザー", on_delete=models.SET_NULL, blank=True, null=True, related_name="notified", db_index=True)
     action_type = models.CharField(verbose_name="通知タイプ", choices=ACTION_TYPE, max_length=50, db_index=True)
@@ -176,7 +175,8 @@ class Notification(models.Model):
     comment = models.ForeignKey(Comment, verbose_name="コメント", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
     like = models.ForeignKey(ArticleLike, verbose_name="記事", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
     follow = models.ForeignKey(Follow, verbose_name="フォロー", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
-    is_read = models.BooleanField(verbose_name='既読', default=0, db_index=True)
+    is_read = models.BooleanField(verbose_name='既読', default=0, db_index=True, blank=True)
+    created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
 
     class Meta():
         verbose_name_plural = '通知'

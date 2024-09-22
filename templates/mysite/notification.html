@@ -3,6 +3,66 @@
 {% block content %}
 
 <main class="container">
+    <div class="row">
+        <div class="col-md-10 col-12 mx-auto">
+            <div class="row">
+                <div class="col-2">
+                    <div class="h4 pb-2 mb-4 text-secondry border-bottom border-info">
+                        <span class="ms-2">通知種別</span>
+                    </div>
+                    <ol class="list-group list-group-flush">
+                        {% for action in action_type %}
+                            <form method="get">
+                                <button type="submit" class="list-group-item list-group-item-action border border-start-0 border-end-0 border-top-0">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-bold">
+                                            {% if action.0 == "new_registration" %}
+                                                全て
+                                                {% if notifications %}
+                                                <span class="float-end me-3 badge bg-primary rounded-pill">{{ notifications.count }}</span>
+                                                {% endif %}
+                                                <input type="hidden" name="action_type" value="all">
+                                            {% elif action.0 == "comment" %}
+                                                コメント
+                                                <span class="float-end me-3 badge bg-primary rounded-pill">{{ notification_counts.comment_count }}</span>
+                                                <input type="hidden" name="action_type" value="comment">
+                                            {% elif action.0 == "like" %}
+                                                いいね
+                                                <input type="hidden" name="action_type" value="like">
+                                            {% elif action.0 == "follow" %}
+                                                フォロー
+                                                <input type="hidden" name="action_type" value="follow">
+                                            {% elif action.0 == "purchase" %}
+                                                購入
+                                                <input type="hidden" name="action_type" value="purchase">
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </button>
+                            </form>
+                        {% endfor %}
+                    </ol>
+                </div>
+                {% comment %} 通知一覧 {% endcomment %}
+                <div class="col-9 ms-lg-1">
+                    <div class="h4 pb-2 mb-4 text-dark border-bottom border-success">
+                        <span class="ms-4">{{ title }}</span>
+                    </div>
+                    <ol class="list-group list-group-flush">
+                        {% for notification in notifications %}
+                            <button type="button" class="list-group-item list-group-item-action border border-start-0 border-end-0 border-top-0">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold">
+                                        {{ notification }}
+                                    </div>
+                                </div>
+                            </button>
+                        {% endfor %}
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 {% endblock %}

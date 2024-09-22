@@ -301,8 +301,12 @@ class ArticleLikeView(CustomLoginRequiredMixin, View):
             like_exists = article_like_exists(article, request.user)
 
             if like_exists:
-                ArticleLike.objects.create(user=request.user, article=article)
+                article_like = ArticleLike.objects.create(user=request.user, article=article)
                 context["method"] = "create"
+
+                # いいねされた記事の投稿主に通知を飛ばす
+                if article.author != request.user:
+                    notification_create(article.author, request.user, action_type="like", object=article_like)
             else:
                 ArticleLike.objects.filter(user=request.user, article=article).delete()
                 context["method"] = "delete"
@@ -373,18 +377,39 @@ class SearchView(View):
 ##  通知機能
 ################
 
-
 class NotificationView(View):
     template_name = 'mysite/notification.html'
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {
+        action_type = request.GET.get('action_type')
 
-        })
+        notifications = Notification.objects.filter(user=request.user)
+        notification_counts = notifications.aaggregate(
+            comment_count = Count('comment', filter=Q(action_type='comment')),
+            like_count = Count('like', filter=Q(action_type='like')),
+        )
 
-    def post(self, request, *args, **kwargs):
-        return render(request, self.template_name, {
+        context = {
+            'title' : '通知一覧',
+            "notifications": notifications,
+            "notification_counts": notification_counts,
+            "action_type": ACTION_TYPE,
+        }
 
-        })
+        if action_type == "comment":
+            context['title'] = '通知一覧（コメント）'
+            # context['notifications'] = 
+        elif action_type == "like":
+            context['title'] = '通知一覧（いいね）'
+        elif action_type == "follow":
+            context['title'] = '通知一覧（フォロー）'
+        elif action_type == "purchase":
+            context['title'] = '通知一覧（購入）'
+        else:
+            context['title'] = '通知一覧'
+
+        return render(request, self.template_name, context)
+
+
 
 ################
 ##  カート
