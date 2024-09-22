@@ -9,7 +9,7 @@
 
             {% comment %} {% cache 86400 article article.id %} {% endcomment %}
             {% comment %} カルセール {% endcomment %}
-            <div id="carouselIndicators{{ article.id }}" class="carousel slide carousel-fade col-10" data-bs-ride="carousel">
+            <div id="carouselIndicators{{ article.id }}" class="carousel slide carousel-fade col-md-10" data-bs-ride="carousel">
                 <div class="carousel-indicators">
                     {% for / in article.image.all %}
                     <button type="button" data-bs-target="#carouselIndicators{{ article.id }}" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %} pt-1" aria-current="{% if forloop.first %}true{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
