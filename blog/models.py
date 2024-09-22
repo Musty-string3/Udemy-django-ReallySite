@@ -18,7 +18,7 @@ def upload_article_image_to(instance, filename):
 
 class ArticleTag(models.Model):
     slug = models.CharField(verbose_name='SLUG', unique=True, max_length=20, primary_key=True)
-    name = models.CharField(verbose_name='タグ名', unique=True, max_length=20)
+    name = models.CharField(verbose_name='タグ名', unique=True, max_length=20, db_index=True)
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
@@ -32,7 +32,7 @@ class ArticleTag(models.Model):
 class Article(models.Model):
     title = models.CharField(verbose_name='タイトル', default='タイトルです。', max_length=30, null=False, blank=False)
     text = models.TextField(verbose_name='テキスト', default='テキストです。', max_length=255, null=False, blank=False)
-    author = models.ForeignKey(get_user_model(), verbose_name='作成者', on_delete=models.CASCADE, related_name='articles')
+    author = models.ForeignKey(get_user_model(), verbose_name='作成者', on_delete=models.CASCADE, db_index=True, related_name='articles')
     tags = models.ManyToManyField(ArticleTag, verbose_name='タグ', related_name='articles')
     is_public = models.BooleanField(verbose_name='公開', default=False)
     sell_flag = models.BooleanField(verbose_name='記事を販売', default=False)
@@ -51,7 +51,7 @@ class Article(models.Model):
 
 class Image(models.Model):
     image = models.ImageField(verbose_name='投稿画像', upload_to=upload_article_image_to)
-    article = models.ForeignKey(Article, verbose_name="記事", on_delete=models.CASCADE, default='', related_name='image')
+    article = models.ForeignKey(Article, verbose_name="記事", on_delete=models.CASCADE, default='', related_name='image', db_index=True)
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
@@ -64,8 +64,8 @@ class Image(models.Model):
 
 class Comment(models.Model):
     comment = models.TextField(verbose_name='コメント', max_length='500')
-    user = models.ForeignKey(get_user_model(), verbose_name='投稿者', on_delete=models.CASCADE)
-    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(get_user_model(), verbose_name='投稿者', on_delete=models.CASCADE, db_index=True)
+    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, db_index=True ,related_name='comments')
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
@@ -78,8 +78,8 @@ class Comment(models.Model):
 
 
 class ArticleLike(models.Model):
-    user = models.ForeignKey(get_user_model(), verbose_name='投稿者', on_delete=models.CASCADE)
-    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='article_like')
+    user = models.ForeignKey(get_user_model(), verbose_name='投稿者', on_delete=models.CASCADE, db_index=True)
+    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, db_index=True, related_name='article_like')
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
@@ -100,8 +100,8 @@ class Order(models.Model):
         (200, '決済取り消し'),
     )
 
-    user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE)
-    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='order')
+    user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE, db_index=True)
+    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, db_index=True, related_name='order')
     price = models.IntegerField(verbose_name='価格', blank=True, null=True)
     charge_type = models.SmallIntegerField(verbose_name='課金タイプ', choices=CHARGE_TYPE, default=1)
     order_status = models.SmallIntegerField(verbose_name='決済ステータス', choices=ORDER_STATUS, default=1)
@@ -114,8 +114,8 @@ class Order(models.Model):
 
 
 class UserItem(models.Model):
-    user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE, related_name='user_item')
-    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='user_item')
+    user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE, db_index=True, related_name='user_item')
+    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, db_index=True, related_name='user_item')
     charge_type = models.SmallIntegerField(verbose_name='課金タイプ', choices=CHARGE_TYPE, default=1)
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
@@ -126,8 +126,8 @@ class UserItem(models.Model):
         db_table = 'user_item'
 
 class ViewCount(models.Model):
-    user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE)
-    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, related_name='view_count')
+    user = models.ForeignKey(get_user_model(), verbose_name='ユーザー', on_delete=models.CASCADE, db_index=True)
+    article = models.ForeignKey(Article, verbose_name='記事', on_delete=models.CASCADE, db_index=True, related_name='view_count')
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name='更新日時', auto_now=True)
 
@@ -148,8 +148,8 @@ class ViewCount(models.Model):
 
 
 class Follow(models.Model):
-    follower = models.ForeignKey(get_user_model(), verbose_name="フォローしたユーザー", related_name='following', on_delete=models.CASCADE)
-    followed = models.ForeignKey(get_user_model(), verbose_name="フォローされたユーザー", related_name='followers', on_delete=models.CASCADE)
+    follower = models.ForeignKey(get_user_model(), verbose_name="フォローしたユーザー", related_name='following', on_delete=models.CASCADE, db_index=True)
+    followed = models.ForeignKey(get_user_model(), verbose_name="フォローされたユーザー", related_name='followers', on_delete=models.CASCADE, db_index=True)
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
 
     class Meta:
@@ -157,5 +157,30 @@ class Follow(models.Model):
         db_table = 'user_follow'
         unique_together = ('follower', 'followed')
 
-    # def __init__(self):
-    #     return f'{self.follower} follows {self.followed}'
+
+
+class Notification(models.Model):
+
+    ACTION_TYPE = (
+        ('comment', 'Comment'),
+        ('like', 'Like'),
+        ('follow', 'Follow'),
+        ('purchase', 'Purchase'),
+        ('new_registration', 'New_registration'),
+    )
+
+    user = models.ForeignKey(get_user_model(), verbose_name="通知を受け取るユーザー", on_delete=models.CASCADE, related_name="notifications", db_index=True)
+    sender = models.ForeignKey(get_user_model(), verbose_name="通知したユーザー", on_delete=models.SET_NULL, blank=True, null=True, related_name="notified", db_index=True)
+    action_type = models.CharField(verbose_name="通知タイプ", choices=ACTION_TYPE, max_length=50, db_index=True)
+    article = models.ForeignKey(Article, verbose_name="記事", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    comment = models.ForeignKey(Comment, verbose_name="コメント", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    like = models.ForeignKey(ArticleLike, verbose_name="記事", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    follow = models.ForeignKey(Follow, verbose_name="フォロー", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    is_read = models.BooleanField(verbose_name='既読', default=0, db_index=True)
+
+    class Meta():
+        verbose_name_plural = '通知'
+        db_table = 'notification'
+
+    def __str__(self):
+        return f'Notification: {self.user} - {self.action_type}'

@@ -13,8 +13,11 @@ urlpatterns = [
     path('<int:pk>/like/', views.ArticleLikeView.as_view(), name='like_detail'),
     # 検索機能
     path('search/', views.SearchView.as_view(), name='search'),
+    # 購入関係
     path('cart/', views.ArticleInCartView.as_view(), name='cart'),
     path('purchase/', views.ArticlePurchaseView.as_view(), name='purchase'),
+    # 通知
+    path('notification/', views.NotificationView.as_view(), name="notification"),
     # フォロー
     path('follow/<int:pk>', views.FollowView.as_view(), name='follow'),
     # DM

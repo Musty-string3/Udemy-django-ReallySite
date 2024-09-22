@@ -16,64 +16,64 @@
                 <button type="submit" id="Submit" class="btn btn-outline-primary p-3">検索</button>
             </div>
         </div>
-
-        <div class="row" id='SearchResult'>
-            {% if search and articles or users %}
-                <h5 class="text-center">検索内容 {{ search }}</h5>
-                {% if articles and users or filter %}
-                <div class="d-flex justify-content-center text-center ">
-                    <a href="{% url 'blog:search' %}?search={{ search }}&articles=True" class="text-decoration-none text-dark">投稿</a>
-                    <span class="ms-2 me-2"> | </span>
-                    <a href="{% url 'blog:search' %}?search={{ search }}&users=True" class="text-decoration-none text-dark">ユーザー</a>
-                </div>
-                {% endif %}
-                {% comment %} 記事の検索結果 {% endcomment %}
-                <div class="col-md-10 col m-auto mt-4">
-                    <div class="card-deck row row-cols-1 row-cols-md-2 g-4" id='Articles'>
-                        {% for article in articles %}
-                        <div class="col-lg-6 col">
-                            {% include "snippets/articles_index.html" %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% if filter or not articles  %}
-                {% comment %} ユーザーの検索結果 {% endcomment %}
-                <div class="col-md-10 col m-auto">
-                    <ul class="list-group list-group-flush" id='Users'>
-                        {% for profile in users %}
-                        <li class="list-group-item">
-                            <div class="d-flex">
-                                <a href="{% url 'author' pk=profile.user.id %}" class="d-flex text-decoration-none text-dark">
-                                    <img src="{{ profile.image.url }}" class="profile_author_image rounded-circle border border-secondary">
-                                    <h5 class="mt-2 ms-2">{{ user.username }}</h5>
-                                </a>
-                                <div class="ms-3 mt-2">
-                                    <span class="me-3 ">フォロー中 {{ profile.follows.all.count }}</span>
-                                    <span class="me-3 ">フォロワー {{ profile.user.followed_by.all.count }}</span>
-                                    <span class="me-3 ">投稿数 {{ profile.user.articles.all.count }}</span>
-                                </div>
-                            </div>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                {% endif %}
-            {% elif search %}
-                <div class="col-lg-8 col-md-6 col-10 m-auto mt-2">
-                    <h5 class="text-center mb-5">検索結果が見つかりませんでした。</h5>
-                    <div class="d-flex justify-content-center">
-                        <img src="/static/mysite/犬{{random_number}}.jpg" alt="?" class="random_dog img-thumbnail">
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-        <div class="d-flex justify-content-center mt-5">
-            <div class="spinner-border" role="status" id='Loading' style='display: none;'>
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
     </form>
+
+    <div class="row" id='SearchResult'>
+        {% if search and articles or users %}
+            <h5 class="text-center">検索内容 {{ search }}</h5>
+            {% if articles and users or filter %}
+            <div class="d-flex justify-content-center text-center ">
+                <a href="{% url 'blog:search' %}?search={{ search }}&articles=True" class="text-decoration-none text-dark">投稿</a>
+                <span class="ms-2 me-2"> | </span>
+                <a href="{% url 'blog:search' %}?search={{ search }}&users=True" class="text-decoration-none text-dark">ユーザー</a>
+            </div>
+            {% endif %}
+            {% comment %} 記事の検索結果 {% endcomment %}
+            <div class="col-md-10 col m-auto mt-4">
+                <div class="card-deck row row-cols-1 row-cols-md-2 g-4" id='Articles'>
+                    {% for article in articles %}
+                    <div class="col-lg-6 col">
+                        {% include "snippets/articles_index.html" %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% if filter or not articles  %}
+            {% comment %} ユーザーの検索結果 {% endcomment %}
+            <div class="col-md-10 col m-auto">
+                <ul class="list-group list-group-flush" id='Users'>
+                    {% for profile in users %}
+                    <li class="list-group-item">
+                        <div class="d-flex">
+                            <a href="{% url 'author' pk=profile.user.id %}" class="d-flex text-decoration-none text-dark">
+                                <img src="{{ profile.image.url }}" class="profile_author_image rounded-circle border border-secondary">
+                                <h5 class="mt-2 ms-2">{{ user.username }}</h5>
+                            </a>
+                            <div class="ms-3 mt-2">
+                                <span class="me-3 ">フォロー中 {{ profile.follows.all.count }}</span>
+                                <span class="me-3 ">フォロワー {{ profile.user.followed_by.all.count }}</span>
+                                <span class="me-3 ">投稿数 {{ profile.user.articles.all.count }}</span>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        {% elif search %}
+            <div class="col-lg-8 col-md-6 col-10 m-auto mt-2">
+                <h5 class="text-center mb-5">検索結果が見つかりませんでした。</h5>
+                <div class="d-flex justify-content-center">
+                    <img src="/static/mysite/犬{{random_number}}.jpg" alt="?" class="random_dog img-thumbnail">
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <div class="d-flex justify-content-center mt-5">
+        <div class="spinner-border" role="status" id='Loading' style='display: none;'>
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
 </main>
 
 <script>

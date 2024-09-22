@@ -314,6 +314,18 @@ class ArticleLikeView(CustomLoginRequiredMixin, View):
 
         return JsonResponse(context)
 
+
+
+################
+##  非同期コメント
+################
+
+# class CommentNewView(CustomLoginRequiredMixin, View):
+#     def post(self, request, pk, *args, **kwargs):
+
+#         return JsonResponse(context)
+
+
 ################
 ##  検索機能
 ################
@@ -357,6 +369,22 @@ class SearchView(View):
         return render(request, self.template_name, context)
 
 
+################
+##  通知機能
+################
+
+
+class NotificationView(View):
+    template_name = 'mysite/notification.html'
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {
+
+        })
+
+    def post(self, request, *args, **kwargs):
+        return render(request, self.template_name, {
+
+        })
 
 ################
 ##  カート
