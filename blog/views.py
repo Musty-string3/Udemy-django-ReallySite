@@ -663,6 +663,20 @@ class DMDetailView(CustomLoginRequiredMixin, View):
     template_name = 'mysite/dm/detail.html'
 
     def get(self, request, pk, *args, **kwargs):
+
+        try:
+            user = get_user_model().objects.get(pk=pk)
+        except get_user_model().DoesNotExist:
+            messages.error(request, '存在しないユーザーにアクセスしました。')
+            return redirect('/')
+
+        request_user = get_user_model().objects.get(pk=request.user.id)
+
+        # ユーザールームが存在したら取得し、存在しなかったら作成する
+        conversation = Conversation.objects.get_or_create(user1=request_user, user2=user)
+
+        # TODO: ここから始める
+
         return render(request, self.template_name, {
             
         })
