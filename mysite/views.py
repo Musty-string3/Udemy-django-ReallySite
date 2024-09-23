@@ -21,9 +21,10 @@ class TopView(View):
     def get(self, request, *args, **kwargs):
         # 人気記事TOP3を取得
         popular_articles = Article.objects.filter(is_public=True).annotate(
-            like_count=Count('article_like'),
-            comment_count=Count('comments'),
-            view_total_count=Count('view_count'),
+            # ! distinct=Trueで重複を避ける
+            like_count=Count('article_like', distinct=True),
+            comment_count=Count('comments', distinct=True),
+            view_total_count=Count('view_count', distinct=True),
             ).order_by('-like_count')[:4]
 
         # 決済未完了のorderを取得
@@ -88,6 +89,7 @@ class Signup(View):
             # ログインさせる
             login(request, user)
             messages.success(request, 'ユーザー登録が完了しました。')
+            notification_create(request.user,  action_type="new_registration")
             return redirect('/')
         else:
             messages.error(request, 'ユーザー登録に失敗しました。（既に同じメールアドレスを持ったユーザーが存在します。）')
@@ -130,11 +132,6 @@ class MypageView(CustomLoginRequiredMixin, View):
         if profile_form.is_valid():
             profile = profile_form.save(request.user, user_image_url, commit=False)
             profile.user = request.user
-
-            # メディアのプロフィール画像を削除
-            profile_image = Profile.objects.get(user=request.user)
-            print('profile_image.image', profile_image.image)
-            profile_image.image.delete(save=False)
 
             profile.save()
             messages.success(request, 'プロフィール情報が更新されました。')
@@ -194,23 +191,29 @@ class ContactView(View):
         })
 
     def post(self, request, *args, **kwargs):
-        print(request.POST.get)
+        print('request.POST.get', request.POST.get)
+        name=request.POST.get('name', None)
+        email=request.POST.get('email')
+        contact=request.POST.get('contact')
+
+        # 値が入っていなかったらトップページにリダイレクト
+        if not name or not email or not contact:
+            messages.error(request, "メールの送信に失敗しました。")
+            return redirect('contact')
+
         # ------ email送信
-        subject = 'お問い合わせがありました。'
-        message = "お問い合わせがありました。\n\n名前: {}\nメールアドレス: {}\n内容: {}\n".format(
-            request.POST.get('name'),
-            request.POST.get('email'),
-            request.POST.get('contact'),
+        is_send_email = create_email(
+            subject='お問い合わせがありました。',
+            name=name,
+            email=email,
+            contact=contact,
         )
-        email_from = os.environ['EMAIL_HOST_USER']
-        email_to = [os.environ['EMAIL_HOST_USER'], ]
-        try:
-            send_mail(subject, message, email_from, email_to)
+        if is_send_email == "送信完了":
             messages.success(request, 'お問い合わせメールの送信をしました。')
-        except Exception as e:
-            messages.error(request, f'メールの送信に失敗しました。エラーコード{e}')
+        else:
+            messages.error(request, is_send_email)
             return redirect('/')
-        return render(request, self.template_name, {
-        })
+
+        return render(request, self.template_name, {})
 
 

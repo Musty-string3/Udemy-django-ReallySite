@@ -32,9 +32,10 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
         page_number = request.GET.get('page')
 
         articles = Article.objects.filter(is_public=True).annotate(
-            like_count=Count('article_like'),
-            comment_count=Count('comments'),
-            view_total_count=Count('view_count'),
+            # ! distinct=Trueで重複を避ける
+            like_count=Count('article_like', distinct=True),
+            comment_count=Count('comments', distinct=True),
+            view_total_count=Count('view_count', distinct=True),
         ).order_by('-created_at')
         # 1ページの記事の表示を変更
         paginator = Paginator(articles, 20).get_page(page_number)
@@ -143,6 +144,14 @@ class ArticleDetailView(CustomLoginRequiredMixin, View):
             comment.user = request.user
             comment.article = article
             comment.save()
+            # 通知を飛ばす
+            notification_create(
+                request.user,
+                receive_user=article.comments.all(),
+                action_type="comment",
+                object=comment,
+                article=article
+            )
         else:
             messages.error(request, '処理に失敗しました。')
             return redirect('blog:detail', pk)
@@ -306,7 +315,7 @@ class ArticleLikeView(CustomLoginRequiredMixin, View):
 
                 # いいねされた記事の投稿主に通知を飛ばす
                 if article.author != request.user:
-                    notification_create(article.author, request.user, action_type="like", object=article_like)
+                    notification_create(request.user, receive_user=article.author, action_type="like", object=article_like)
             else:
                 ArticleLike.objects.filter(user=request.user, article=article).delete()
                 context["method"] = "delete"
@@ -378,34 +387,23 @@ class SearchView(View):
 ################
 
 class NotificationView(View):
-    template_name = 'mysite/notification.html'
+    template_name = 'mysite/notification/notification.html'
     def get(self, request, *args, **kwargs):
         action_type = request.GET.get('action_type')
 
         notifications = Notification.objects.filter(user=request.user)
-        notification_counts = notifications.aaggregate(
-            comment_count = Count('comment', filter=Q(action_type='comment')),
-            like_count = Count('like', filter=Q(action_type='like')),
-        )
+        new_notifications = Notification.objects.select_related('profile').filter(user=request.user, is_read=False)
+        # TODO: 一度だけカウント数をtemplate側で表示させたい
+
+        # 通知の既読をつける
+        new_notifications.update(is_read=True)
 
         context = {
             'title' : '通知一覧',
             "notifications": notifications,
-            "notification_counts": notification_counts,
             "action_type": ACTION_TYPE,
         }
-
-        if action_type == "comment":
-            context['title'] = '通知一覧（コメント）'
-            # context['notifications'] = 
-        elif action_type == "like":
-            context['title'] = '通知一覧（いいね）'
-        elif action_type == "follow":
-            context['title'] = '通知一覧（フォロー）'
-        elif action_type == "purchase":
-            context['title'] = '通知一覧（購入）'
-        else:
-            context['title'] = '通知一覧'
+        context = filter_notifications(request.user, action_type, context)
 
         return render(request, self.template_name, context)
 
@@ -437,15 +435,26 @@ class ArticleInCartView(CustomLoginRequiredMixin, View):
                 messages.error(request, '記事の取得に失敗しました。')
                 return redirect('blog:index')
 
-            Order.objects.create(
+            order_exists = Order.objects.filter(
                 user=request.user,
                 article=article,
                 price=article.price,
                 charge_type=0,
                 order_status=0,
-            )
-            messages.success(request, 'マイカートに追加しました。')
-            return redirect('blog:index')
+            ).exists()
+            if not order_exists:
+                Order.objects.create(
+                    user=request.user,
+                    article=article,
+                    price=article.price,
+                    charge_type=0,
+                    order_status=0,
+                )
+                messages.success(request, 'マイカートに追加しました。')
+                return redirect('blog:index')
+            else:
+                messages.error(request, 'すでにカートに追加済みです。')
+                return redirect('blog:index')
 
 
 
@@ -536,7 +545,26 @@ class ArticlePurchaseView(CustomLoginRequiredMixin, View):
 
             for article in articles:
                 UserItem.objects.create(user=request.user, article=article, charge_type=1)
-            print('UsetItemの作成完了')
+
+                # 購入通知（アプリ内）を飛ばす
+                notification_create(
+                    request.user,
+                    action_type="purchase",
+                    article=article
+                )
+            print('UsetItem、Notificationの作成完了')
+
+            # 購入通知（メール）を飛ばす
+            subject = "【購入メール】商品の購入をありがとうございます。"
+            name = request.user.profile.username
+            email = request.user.email
+            articles = articles
+            total_price = sum(article.price for article in articles)
+            is_send_email = create_email(subject, name, email, articles=articles, price=total_price)
+            if is_send_email == "送信完了":
+                print('メール送信が完了しました。')
+            else:
+                print('メール送信に失敗しました。')
 
             messages.success(request, '購入が完了しました。')
             return render(request, self.template_name, {
@@ -598,8 +626,16 @@ class FollowView(CustomLoginRequiredMixin, View):
             Follow.objects.get(follower=request.user, followed=user).delete()
             profile.follows.remove(user)
         else:
-            Follow.objects.create(follower=request.user, followed=user)
+            following = Follow.objects.create(follower=request.user, followed=user)
             profile.follows.add(user)
+
+            # フォロー通知を飛ばす
+            notification_create(
+                request.user,
+                receive_user=user,
+                action_type="follow",
+                object=following,
+            )
 
         profile.save()
         return redirect('author', pk=pk)

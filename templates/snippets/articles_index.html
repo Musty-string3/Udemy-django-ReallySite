@@ -1,6 +1,10 @@
 
 <div class="card h-100" id="article-card-{{ article.id }}" style="display:none;">
+    {% if article.sell_flag and article.price != 0 and not article.author == request.user and not article.id in uset_item_ids %}
+        <a data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
+    {% else %}
     <a href="{% url 'blog:detail' article.id %}">
+    {% endif %}
         <div id="carouselIndicators{{ article.id }}" class="carousel slide" data-bs-ride="carousel">
             <div class="carousel-indicators">
                 {% for / in article.image.all %}
@@ -53,8 +57,10 @@
                 {% endif %}
             </div>
             {% if article.sell_flag and article.price != 0 and not article.author == request.user and not article.id in uset_item_ids %}
-                {% if article.id in purchased_article_ids and article.id in user_items %}
-                <a href="{% url 'blog:cart' %}?article_id={{ article.id }}&delete=True" type="button" class="btn btn-primary">カートから外す</a>
+                {% if article.id in purchased_article_ids %}
+                <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
+                    カートから外す
+                </button>
                 {% else %}
                 <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
                     カートにいれる

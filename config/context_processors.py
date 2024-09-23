@@ -4,5 +4,5 @@ from blog.models import Notification
 def notification_count(request):
     count = 0
     if request.user.is_authenticated:
-        count = Notification.objects.filter(user=request.user).count()
+        count = Notification.objects.filter(user=request.user, is_read=False).count()
     return {'notification_count': count}

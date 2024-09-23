@@ -26,7 +26,11 @@
             </div>
             <div class="modal-footer d-flex justify-content-evenly">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">戻る</button>
+                {% if article.id in purchased_article_ids %}
+                <a href="{% url 'blog:cart' %}?article_id={{ article.id }}&delete=True" type="button" class="btn btn-info">カートから外す</a>
+                {% else %}
                 <a href="{% url 'blog:cart' %}?article_id={{ article.id }}" type="button" class="btn btn-primary">カートに入れる</a>
+                {% endif %}
             </div>
         </div>
     </div>

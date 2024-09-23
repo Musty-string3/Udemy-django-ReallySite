@@ -40,7 +40,19 @@ class ProfileForm(forms.ModelForm):
 
         # 新しい画像がアップロードされていない場合、既存の画像を保持
         if self.cleaned_data.get('image') == "images/default.png" and user_image_url != default_image:
+            print('アイコンは変わっていません')
             profile.image = user_image_url.replace(f'media/profile_images/{user.id}', '')
+        else:
+            print('アイコンは変わっています')
+
+            # アイコンが変更されたため、メディアのプロフィール画像を削除
+            profile_image = Profile.objects.get(user=user)
+            print('profile_image.image', str(profile_image.image))
+            if not "images/default.png" in str(profile_image.image):
+                print(str(profile_image.image), 'を削除しました。')
+                profile_image.image.delete(save=False)
+            else:
+                print(str(profile_image.image), 'のため削除しません。')
         if commit:
             profile.save()
         return profile

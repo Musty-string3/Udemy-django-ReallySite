@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.core.mail import send_mail
 
 
 from blog.models import *
@@ -54,13 +55,120 @@ def user_item_index(request, user, charge_type):
     user_item = UserItem.objects.filter(user=user, charge_type=charge_type)
     return user_item
 
-def notification_create(user, sender=False, action_type=False, object=False, article=False):
+def notification_create(sender, receive_user=False, action_type=False, object=False, article=False):
+    # ! receive_user = 通知を受け取るユーザー
+
     if action_type == "like":
         Notification.objects.get_or_create(
-            user = user,
+            user = receive_user,
             sender = sender,
             action_type = action_type,
             like = object,
         )
+    elif action_type == "new_registration":
+        Notification.objects.get_or_create(
+            user = sender,
+            action_type = action_type,
+        )
+    elif action_type == "comment":
+        for re_user in receive_user:
+            if sender != re_user.user:
+                print("送信する相手", re_user.user)
+                Notification.objects.create(
+                    user = receive_user,
+                    sender = re_user.user,
+                    action_type = action_type,
+                    comment = object,
+                )
+        # 投稿主にコメントが来た通知を送る
+        Notification.objects.create(
+            user = article.author,
+            sender = sender,
+            action_type = action_type,
+            comment = object,
+        )
+    elif action_type == "follow":
+        Notification.objects.get_or_create(
+            user = receive_user,
+            sender = sender,
+            action_type = action_type,
+            follow = object,
+        )
+    elif action_type == "purchase":
+        Notification.objects.create(
+            user = sender,
+            action_type = action_type,
+            article=article
+        )
 
     return True
+
+
+
+
+def filter_notifications(user, action_type, context):
+
+    if action_type == "all":
+        context['title'] = '通知一覧'
+        context['notifications'] = Notification.objects.filter(user=user)
+
+    elif action_type == "comment":
+        context['title'] = '通知一覧（コメント）'
+        context['notifications'] = Notification.objects.filter(user=user, action_type="comment")
+
+    elif action_type == "like":
+        context['title'] = '通知一覧（いいね）'
+        context['notifications'] = Notification.objects.filter(user=user, action_type="like")
+
+    elif action_type == "follow":
+        context['title'] = '通知一覧（フォロー）'
+        context['notifications'] = Notification.objects.filter(user=user, action_type="follow")
+
+    elif action_type == "purchase":
+        context['title'] = '通知一覧（購入）'
+        context['notifications'] = Notification.objects.filter(user=user, action_type="purchase")
+
+    return context
+
+
+
+def create_email(subject, name, email, contact=False, articles=False, price=False):
+    email_from = os.environ['EMAIL_HOST_USER']
+    email_to = [os.environ['EMAIL_HOST_USER'], ]
+
+    # ------ お問い合わせのemail送信
+    if subject == "お問い合わせがありました。":
+        message = "お問い合わせがありました。\n\n名前: {}\nメールアドレス: {}\n内容: {}\n".format(
+            name,
+            email,
+            contact,
+        )
+
+    # ------ お問い合わせのemail送信
+    elif subject == "【購入メール】商品の購入をありがとうございます。":
+        article_counts = len(articles)
+        content = "この度は商品をご購入いただきありがとうございます。\n購入商品は{}点になります。\n引き続きサービスをよろしくぴょんだにゃん。".format(
+            article_counts
+        )
+        sub_title = "名前: {}\nメールアドレス: {}\nお支払い金額:￥{}円\n".format(
+            name,
+            email,
+            price,
+        )
+        article_detail = []
+        for article in articles:
+            article_detail.append("\n---------------\n購入商品: {}\n購入金額:￥{}円".format(
+                article.title,
+                article.price,
+            ))
+        message = "{}\n\n{}{}".format(
+            content,
+            sub_title,
+            "".join(article_detail),
+        )
+
+    try:
+        send_mail(subject, message, email_from, email_to)
+        return "送信完了"
+    except Exception as e:
+        return f'メールの送信に失敗しました。エラーコード{e}'

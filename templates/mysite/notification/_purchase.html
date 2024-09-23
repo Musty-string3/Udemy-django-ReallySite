@@ -1,0 +1,14 @@
+<div class="col-lg-1 col-2">
+    <img src="{{ notification.article.author.profile.image.url }}" class="article_profile_image rounded-circle border border-secondary">
+</div>
+<div class="col-lg-8 col-6">
+    <p class="fw-light">
+        {{ notification.article.author.profile.username|truncatechars:20 }}さんの{{ notification.article.title|truncatechars:20 }}の記事を購入しました。
+    </p>
+    <small class="fw-lighter">
+        {{ notification.created_at }}
+    </small>
+</div>
+<div class="col-lg-2 col-4">
+    <img src="{{ notification.article.image.all.0.image.url }}" class="img-thumbnail notification_article_image">
+</div>

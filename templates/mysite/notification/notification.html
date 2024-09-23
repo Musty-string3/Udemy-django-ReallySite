@@ -1,0 +1,89 @@
+{% extends "mysite/base.html" %}
+
+{% block content %}
+
+<main class="container">
+    <div class="row">
+        <div class="col-lg-10 col-12 mx-auto">
+            <div class="row">
+                <div class="col-md-2 d-none d-lg-block">
+                    <div class="h4 pb-2 mb-4 text-secondry border-bottom border-info">
+                        <span class="ms-2">通知種別</span>
+                    </div>
+                    <ol class="list-group list-group-flush">
+                        {% for action in action_type %}
+                            <form method="get">
+                                <button type="submit" class="list-group-item list-group-item-action border border-start-0 border-end-0 border-top-0">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-bold">
+                                            {% if action.0 == "new_registration" %}
+                                                <span class="fw-light">全て</span>
+                                                {% comment %} {% if notifications %}
+                                                <span class="float-end me-3 badge bg-primary rounded-pill">{{ notifications.count }}</span>
+                                                {% endif %} {% endcomment %}
+                                                <input type="hidden" name="action_type" value="all">
+                                            {% elif action.0 == "comment" %}
+                                                <span class="fw-light">コメント</span>
+                                                <input type="hidden" name="action_type" value="comment">
+                                                {% elif action.0 == "like" %}
+                                                <span class="fw-light">いいね</span>
+                                                <input type="hidden" name="action_type" value="like">
+                                                {% elif action.0 == "follow" %}
+                                                <span class="fw-light">フォロー</span>
+                                                <input type="hidden" name="action_type" value="follow">
+                                                {% elif action.0 == "purchase" %}
+                                                <span class="fw-light">購入</span>
+                                                <input type="hidden" name="action_type" value="purchase">
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </button>
+                            </form>
+                        {% endfor %}
+                    </ol>
+                </div>
+                {% comment %} 通知一覧 {% endcomment %}
+                <div class="col-lg-9 col-12 ms-lg-1">
+                    <div class="h4 pb-2 mb-4 text-dark border-bottom border-success">
+                        <span class="ms-4">{{ title }}</span>
+                    </div>
+                    <ol class="list-group list-group-flush">
+                        {% for notification in notifications %}
+                            <a href="
+                                {% if notification.action_type == "like" %}
+                                    {% url 'blog:detail' notification.like.article.id %}
+                                {% elif notification.action_type == "comment" %}
+                                    {% url 'blog:detail' notification.comment.article.id %}
+                                {% elif notification.action_type == "follow" %}
+                                    {% url 'author' notification.sender.id %}
+                                {% elif notification.action_type == "purchase" %}
+                                    {% url 'blog:detail' notification.article.id %}
+                                {% else %}
+                                    #
+                                {% endif %}"
+                                type="button" class="list-group-item list-group-item-action border border-start-0 border-end-0 border-top-0">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold">
+                                        <div class="row mt-1">
+                                            {% if notification.action_type == "like" %}
+                                                {% include "mysite/notification/_like.html" %}
+                                            {% elif notification.action_type == "comment" %}
+                                                {% include "mysite/notification/_comment.html" %}
+                                            {% elif notification.action_type == "follow" %}
+                                                {% include "mysite/notification/_follow.html" %}
+                                            {% elif notification.action_type == "purchase" %}
+                                                {% include "mysite/notification/_purchase.html" %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+{% endblock %}
