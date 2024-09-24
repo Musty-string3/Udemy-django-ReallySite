@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.core.mail import send_mail
 from django.db.models import Count
+from django.db.models import Q
 
 from blog.models import *
 from mysite.forms import UserCreateForm, ProfileForm
@@ -173,12 +174,17 @@ class AuthorView(CustomLoginRequiredMixin, View):
         # followed_byはUserモデルに適用される（逆参照）
         followed_count = user.followed_by.all().count()
 
+        dm_exitst = Conversation.objects.filter(
+                Q(user1=request.user, user2=user) | Q(user1=user, user2=request.user)
+            ).exists()
+
         return render(request, self.template_name, {
             'user': user,
             'public_artiles': public_artiles,
             'follow': follow,
             'follows_count': follows_count,
             'followed_count': followed_count,
+            'dm_exitst': dm_exitst,
         })
 
 

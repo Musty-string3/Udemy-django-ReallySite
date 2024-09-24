@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Comment, Article, ArticleTag
+from .models import *
 
 class CommentForm(forms.ModelForm):
     class Meta:
@@ -55,3 +55,11 @@ class SearchForm(forms.Form):
             'placeholder': 'キーワードを入力してください',
         })
     )
+
+
+class DMForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = (
+            'text',
+        )

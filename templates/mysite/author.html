@@ -5,7 +5,7 @@
 {% block content %}
 <main class="container">
     <div class="row">
-        <div class="col-md-8 m-auto">
+        <div class="col-md-10 col-12 m-auto">
 
             <div class="col-12">
                 <img src="{{ user.profile.image.url }}" alt="" class="col-2 mb-1 profile_author_image rounded-circle border border-secondary">
@@ -25,49 +25,24 @@
                         {% endif %}
                     </form>
                 </div>
-                <a class="p-2 h5 link-secondary" href="#"><i class="bi bi-envelope"></i></a>
+                <a class="p-2 h5 link-secondary" href="{% url 'blog:dm_detail' user.id %}">
+                    {% if dm_exitst %}
+                    <i class="bi bi-envelope"></i>
+                    {% else %}
+                    <i class="bi bi-envelope-plus"></i>
+                    {% endif %}
+                </a>
             </div>
 
             <hr>
             {% if user.profile.is_public %}
             <div class="row">
-                <h4 class="mb-4">投稿記事</h4>
-                <div class="col-10">
+                <h4 class="mb-2 text-center">投稿記事</h4>
+                <div class="card-deck row row-cols-1 row-cols-md-2 g-4 mb-3">
                     {% for article in public_artiles %}
-                    <h5 class="blog-post-title">{{ article.title }}</h5>
-                    <div class="blog-post-meta">
-                        {{ article.created_at }}
+                    <div class="col-lg-4 col-md-6 col">
+                        {% include "snippets/articles_index.html" %}
                     </div>
-                    <p class="text-danger">記事の星5評価と画像を追加したい</p>
-                    <p>{{ article.text|truncatechars:30 }}</p>
-                    <div class="d-flex">
-                        <i class="bi bi-suit-heart mb-1 me-1"></i>
-                        {{ article.like_count }}
-                        <i class="ms-1 bi bi-chat-left-dots mb-2 me-1"></i>
-                        {{ article.comment_count }}
-                        <p class="ms-1">閲覧数 {{ article.view_total_count }}</p>
-                    </div>
-                    <div class="small text-muted">
-                        {% if article.id in uset_item_ids %}
-                        記事を販売中：価格{{ article.price }}円 購入済
-                        {% elif article.sell_flag and article.price != 0 %}
-                        記事を販売中：価格{{ article.price }}円
-                        {% endif %}
-                    </div>
-                    {% if article.sell_flag and article.price != 0 and not article.author == request.user and not article.id in uset_item_ids %}
-                        {% if article.id in purchased_article_ids and article.id in user_items %}
-                        <a href="{% url 'blog:cart' %}?article_id={{ article.id }}&delete=True" type="button" class="btn btn-primary">カートから外す</a>
-                        {% else %}
-                        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
-                            カートにいれる
-                        </button>
-                        {% endif %}
-                    {% include "snippets/modal_purchase.html" %}
-                    {% else %}
-                    <a class="None-stretched-link" href="{% url 'blog:detail' article.id %}">続きを見る</a>
-                    {% endif %}
-                    <hr>
-
                     {% endfor %}
                 </div>
             </div>
