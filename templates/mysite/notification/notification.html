@@ -34,6 +34,9 @@
                                                 {% elif action.0 == "purchase" %}
                                                 <span class="fw-light">購入</span>
                                                 <input type="hidden" name="action_type" value="purchase">
+                                                {% elif action.0 == "dm" %}
+                                                <span class="fw-light">DM</span>
+                                                <input type="hidden" name="action_type" value="dm">
                                             {% endif %}
                                         </div>
                                     </div>
@@ -58,6 +61,8 @@
                                     {% url 'author' notification.sender.id %}
                                 {% elif notification.action_type == "purchase" %}
                                     {% url 'blog:detail' notification.article.id %}
+                                {% elif notification.action_type == "dm" %}
+                                    {% url 'blog:dm_detail' notification.sender.id %}
                                 {% else %}
                                     #
                                 {% endif %}"
@@ -73,6 +78,8 @@
                                                 {% include "mysite/notification/_follow.html" %}
                                             {% elif notification.action_type == "purchase" %}
                                                 {% include "mysite/notification/_purchase.html" %}
+                                            {% elif notification.action_type == "dm" %}
+                                                {% include "mysite/notification/_dm.html" %}
                                             {% endif %}
                                         </div>
                                     </div>

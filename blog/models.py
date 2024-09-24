@@ -170,6 +170,7 @@ ACTION_TYPE = (
     ('like', 'Like'),
     ('follow', 'Follow'),
     ('purchase', 'Purchase'),
+    ('dm', 'DM'),
 )
 
 
@@ -186,14 +187,14 @@ class Conversation(models.Model):
         ]
 
     def __str__(self):
-        return f'Conversation: {self.user1} - {self.user2}'
+        return f'Conversation: {self.user1.profile.username} - {self.user2.profile.username}'
 
 
 class Message(models.Model):
     conversation = models.ForeignKey(Conversation, verbose_name="DMルーム", on_delete=models.CASCADE, related_name="messages")
     sender = models.ForeignKey(get_user_model(), verbose_name="送信したユーザー", on_delete=models.CASCADE, related_name="messages")
-    text = models.TextField(verbose_name="メッセージ内容")
-    is_read = models.BooleanField(verbose_name="既読", default=False)
+    text = models.TextField(verbose_name="メッセージ内容", blank=False, null=False)
+    is_read = models.BooleanField(verbose_name="既読", default=False, blank=True)
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
 
     class Meta():
@@ -201,7 +202,7 @@ class Message(models.Model):
         db_table = 'dm_message'
 
     def __str__(self):
-        return f'Message: {self.sender}'
+        return f'Message: {self.sender.profile.username}'
 
 
 class MessageAttachment(models.Model):
@@ -227,7 +228,7 @@ class Notification(models.Model):
     comment = models.ForeignKey(Comment, verbose_name="コメント", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
     like = models.ForeignKey(ArticleLike, verbose_name="いいね", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
     follow = models.ForeignKey(Follow, verbose_name="フォロー", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
-    # dm = models.ForeignKey(Follow, verbose_name="DM", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    dm = models.ForeignKey(Message, verbose_name="DM", on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
     is_read = models.BooleanField(verbose_name='既読', default=0, db_index=True, blank=True)
     created_at = models.DateTimeField(verbose_name='作成日時', auto_now_add=True)
 

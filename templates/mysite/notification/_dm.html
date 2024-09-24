@@ -1,0 +1,14 @@
+<div class="col-lg-1 col-2">
+    <img src="{{ notification.sender.profile.image.url }}" class="article_profile_image rounded-circle border border-secondary">
+</div>
+<div class="col-lg-11 col-10">
+    <div class="mb-1">
+        <p class="fw-light mb-1">
+            {{ notification.sender.profile.username|truncatechars:20 }}さんからメッセージが届いています。
+        </p>
+        <span class="fw-lighter">「{{ notification.dm.text|truncatechars:20 }}」</span>
+    </div>
+    <small class="fw-lighter">
+        {{ notification.created_at }}
+    </small>
+</div>

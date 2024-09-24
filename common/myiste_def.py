@@ -16,8 +16,8 @@ class CustomLoginRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-def days_ago_comment(comment_date):
-    delta = timezone.now() - comment_date
+def days_ago_comment(date):
+    delta = timezone.now() - date
     days_ago = delta.days
 
     if delta < timedelta(minutes=1):
@@ -29,11 +29,13 @@ def days_ago_comment(comment_date):
     else:
         return f'{delta.days}日前'
 
+
 def article_like_exists(article, user):
     if ArticleLike.objects.filter(user=user, article=article).exists():
         return False
     else:
         return True
+
 
 def prime_factorize(num):
     a = []
@@ -51,9 +53,11 @@ def prime_factorize(num):
         a.append(num)
     return a
 
+
 def user_item_index(request, user, charge_type):
     user_item = UserItem.objects.filter(user=user, charge_type=charge_type)
     return user_item
+
 
 def notification_create(sender, receive_user=False, action_type=False, object=False, article=False):
     # ! receive_user = 通知を受け取るユーザー
@@ -100,9 +104,21 @@ def notification_create(sender, receive_user=False, action_type=False, object=Fa
             action_type = action_type,
             article=article
         )
+    elif action_type == "dm":
+        notification_exists = Notification.objects.filter(
+                user=receive_user, sender=sender, action_type="dm", is_read=False
+            ).exists()
+
+        # メッセージの既読をしていなかったら通知する
+        if not notification_exists:
+            Notification.objects.create(
+                user = receive_user,
+                sender = sender,
+                action_type = action_type,
+                dm = object,
+            )
 
     return True
-
 
 
 
@@ -110,23 +126,27 @@ def filter_notifications(user, action_type, context):
 
     if action_type == "all":
         context['title'] = '通知一覧'
-        context['notifications'] = Notification.objects.filter(user=user)
+        context['notifications'] = Notification.objects.filter(user=user).order_by('-created_at')
 
     elif action_type == "comment":
         context['title'] = '通知一覧（コメント）'
-        context['notifications'] = Notification.objects.filter(user=user, action_type="comment")
+        context['notifications'] = Notification.objects.filter(user=user, action_type="comment").order_by('-created_at')
 
     elif action_type == "like":
         context['title'] = '通知一覧（いいね）'
-        context['notifications'] = Notification.objects.filter(user=user, action_type="like")
+        context['notifications'] = Notification.objects.filter(user=user, action_type="like").order_by('-created_at')
 
     elif action_type == "follow":
         context['title'] = '通知一覧（フォロー）'
-        context['notifications'] = Notification.objects.filter(user=user, action_type="follow")
+        context['notifications'] = Notification.objects.filter(user=user, action_type="follow").order_by('-created_at')
 
     elif action_type == "purchase":
         context['title'] = '通知一覧（購入）'
-        context['notifications'] = Notification.objects.filter(user=user, action_type="purchase")
+        context['notifications'] = Notification.objects.filter(user=user, action_type="purchase").order_by('-created_at')
+
+    elif action_type == "dm":
+        context['title'] = '通知一覧（DM）'
+        context['notifications'] = Notification.objects.filter(user=user, action_type="dm").order_by('-created_at')
 
     return context
 

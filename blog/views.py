@@ -16,7 +16,7 @@ from django.http import JsonResponse
 
 from .models import *
 from mysite.models.profile_models import Profile
-from .forms import CommentForm, ArticleNewForm, SearchForm
+from .forms import *
 from common.myiste_def import *
 
 
@@ -391,7 +391,6 @@ class NotificationView(View):
     def get(self, request, *args, **kwargs):
         action_type = request.GET.get('action_type')
 
-        notifications = Notification.objects.filter(user=request.user)
         new_notifications = Notification.objects.select_related('profile').filter(user=request.user, is_read=False)
         # TODO: 一度だけカウント数をtemplate側で表示させたい
 
@@ -400,7 +399,6 @@ class NotificationView(View):
 
         context = {
             'title' : '通知一覧',
-            "notifications": notifications,
             "action_type": ACTION_TYPE,
         }
         context = filter_notifications(request.user, action_type, context)
@@ -665,23 +663,66 @@ class DMDetailView(CustomLoginRequiredMixin, View):
     def get(self, request, pk, *args, **kwargs):
 
         try:
-            user = get_user_model().objects.get(pk=pk)
+            partner = get_user_model().objects.get(pk=pk)
         except get_user_model().DoesNotExist:
             messages.error(request, '存在しないユーザーにアクセスしました。')
             return redirect('/')
 
-        request_user = get_user_model().objects.get(pk=request.user.id)
-
         # ユーザールームが存在したら取得し、存在しなかったら作成する
-        conversation = Conversation.objects.get_or_create(user1=request_user, user2=user)
+        dm_room = Conversation.objects.filter(
+                Q(user1=request.user, user2=partner) | Q(user1=partner, user2=request.user)
+            ).first()
+        if not dm_room and request.user != partner:
+            dm_room = Conversation.objects.create(user1=request.user, user2=partner)
+        elif dm_room:
+            pass
+        else:
+            messages.error(request, '異常が発生しました。')
+            return redirect('blog:dm_detail', pk=partner.id)
 
-        # TODO: ここから始める
+        # 既読をつける
+        partner_send_messages = Message.objects.filter(conversation=dm_room, sender=partner, is_read=False)
+        partner_send_messages.update(is_read=True)
+
+        all_messages = Message.objects.filter(conversation=dm_room)
+
+        # メッセージ投稿日時を取得（何日前か？など）
+        messages_with_time = [(message, days_ago_comment(message.created_at)) for message in all_messages]
 
         return render(request, self.template_name, {
-            
+            'partner': partner,
+            "messages_with_time": messages_with_time,
         })
 
     def post(self, request, pk, *args, **kwargs):
-        return render(request, self.template_name, {
-            
-        })
+
+        try:
+            partner = get_user_model().objects.get(pk=pk)
+        except get_user_model().DoesNotExist:
+            messages.error(request, '存在しないユーザーにアクセスしました。')
+            return redirect('/')
+
+        text = request.POST.get('text', None)
+        image = request.FILES.get('image', None)
+
+        if not text and not image:
+            messages.error(request, 'メッセージの送信に失敗しました。')
+            return redirect('blog:dm_detail', pk=request.user.id)
+        else:
+            dm_room = Conversation.objects.filter(
+                Q(user1=request.user, user2=partner) | Q(user1=partner, user2=request.user)
+            ).first()
+            form = DMForm(request.POST)
+            if form.is_valid():
+                message = form.save(commit=False)
+                message.conversation = dm_room
+                message.sender = request.user
+                message.save()
+
+        # TODO: DM時に通知を飛ばす
+        notification_create(request.user, receive_user=partner, action_type="dm", object=message)
+
+        return redirect('blog:dm_detail', pk=partner.id)
+        # return render(request, self.template_name, {
+        #     'partner': partner,
+        # })
