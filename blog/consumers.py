@@ -2,7 +2,9 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.utils import timezone
-from .models import Message, Conversation  # Messageモデルをインポート
+from .models import Message, Conversation
+from django.core.exceptions import ValidationError
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
     # WebSocket接続が確立された
@@ -32,16 +34,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
     # WebSocketからのメッセージを受け取る
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        message = text_data_json.get('message', None)
+        image = text_data_json.get('image', None)
+
+        # メッセージか画像がなかったらエラーを吐かせる
+        if not message and not image:
+            await self.send_error("メッセージの送信に失敗しました。")
+            return
 
         # DMルームを取得する
-        # TODO: user1とuser2を取得する
+        # ここでuser1とuser2を取得する
         user1 = self.scope['user']
         user2 = self.room_name
         conversation = await self.get_conversation(user1, user2)
 
         # メッセージをデータベースに保存
-        await self.save_message_to_db(conversation, message)
+        try:
+            await self.save_message_to_db(conversation, message, image)
+        except ValidationError as e:
+            await self.send_error(str(e))
+            return
 
         # グループにメッセージを送信
         await self.channel_layer.group_send(
@@ -51,6 +63,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': message
             }
         )
+
+    # エラーメッセージをWebSocketに送信
+    async def send_error(self, error_message):
+        await self.send(text_data=json.dumps({
+            'error': error_message
+        }))
+
 
     # グループからのメッセージをWebSocketに送信
     async def chat_message(self, event):
@@ -63,14 +82,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     # メッセージをデータベースに保存する処理
     @database_sync_to_async
-    def save_message_to_db(self, conversation, message):
+    def save_message_to_db(self, conversation, message, image):
         # Messageモデルに新しいメッセージを保存
-        Message.objects.create(
+        message = Message(
             conversation=conversation,
             sender=self.scope['user'],  # ユーザー情報を含める
             text=message,
             created_at=timezone.now()
         )
+
+        # ! 画像があれば保存する
+        if image:
+            # TODO: 画像があった際の処理（MessageAttachmentに保存する）
+            pass
+
+        # バリデーションの実行
+        message.full_clean()
+
+        message.save()
 
     # 会話を取得する処理
     @database_sync_to_async
