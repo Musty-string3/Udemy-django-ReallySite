@@ -23,4 +23,5 @@ urlpatterns = [
     # DM
     path('dm/index', views.DMIndexView.as_view(), name="dm_index"),
     path('dm/<int:pk>', views.DMDetailView.as_view(), name="dm_detail"),
+    path('ws_pra/dm/<str:room_name>/', views.chat_room, name='demo_chat_room'),
 ]

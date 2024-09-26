@@ -42,6 +42,7 @@
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'demo:pay' %}">決済デモページ</a></li>
                         <li><a class="dropdown-item" href="{% url 'demo:cache' %}">キャッシュテスト</a></li>
+                        <li><a class="dropdown-item" href="{% url 'blog:demo_chat_room' room_name=1 %}">websocketでのチャット</a></li>
                     </ul>
                 </li>
                 <li class="nav-item">
@@ -58,15 +59,30 @@
                     </a>
                 </li>
             </ul>
+            <ul class="navbar-nav ms-auto">
+                {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
+                        {% csrf_token %}
+                    </form>
+                    <a href="#" class="text-decoration-none text-dark nav-link" id="logout-link">ログアウト</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="p-2 link-dark nav-link" href="{% url 'login' %}">ログイン</a>
+                </li>
+                <li class="nav-item">
+                    <a class="p-2 link-dark nav-link" href="{% url 'signup' %}">サインイン</a>
+                </li>
+                {% endif %}
+            </ul>
         </div>
-        {% if user.is_authenticated %}
-        <form action="{% url 'logout' %}" method='post'>
-            {% csrf_token %}
-            <button class="btn btn-outline-secondary" type="submit">ログアウト</button>
-        </form>
-        {% else %}
-            <a class="p-2 link-secondary" href="{% url 'login' %}">ログイン</a>
-            <a class="p-2 link-secondary" href="{% url 'signup' %}">サインイン</a>
-        {% endif %}
     </div>
 </nav>
+
+<script>
+    document.getElementById('logout-link').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('logout-form').submit();
+    });
+</script>
