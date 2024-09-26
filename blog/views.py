@@ -645,20 +645,23 @@ class FollowView(CustomLoginRequiredMixin, View):
 ##  DM
 ################
 class DMIndexView(CustomLoginRequiredMixin, View):
-    template_name = 'mysite/dm/index.html'
+    template_name = 'mysite/dm/dm_index.html'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, {
-            
-        })
 
-    def post(self, request, *args, **kwargs):
+        conversations = Conversation.objects.filter(user1=request.user)
+        conversation_with_time = [
+            (conversation, days_ago_comment(last_message.created_at))
+            for conversation in conversations
+            if (last_message := conversation.messages.last())
+        ]
+
         return render(request, self.template_name, {
-            
+            "conversation_with_time": conversation_with_time,
         })
 
 class DMDetailView(CustomLoginRequiredMixin, View):
-    template_name = 'mysite/dm/detail.html'
+    template_name = 'mysite/dm/dm_detail.html'
 
     def get(self, request, pk, *args, **kwargs):
 
@@ -669,9 +672,7 @@ class DMDetailView(CustomLoginRequiredMixin, View):
             return redirect('/')
 
         # ユーザールームが存在したら取得し、存在しなかったら作成する
-        dm_room = Conversation.objects.filter(
-                Q(user1=request.user, user2=partner) | Q(user1=partner, user2=request.user)
-            ).first()
+        dm_room = Conversation.objects.filter(user1=request.user, user2=partner).first()
         if not dm_room and request.user != partner:
             dm_room = Conversation.objects.create(user1=request.user, user2=partner)
         elif dm_room:
@@ -719,10 +720,17 @@ class DMDetailView(CustomLoginRequiredMixin, View):
                 message.sender = request.user
                 message.save()
 
-        # TODO: DM時に通知を飛ばす
+        # DM時に通知を飛ばす
         notification_create(request.user, receive_user=partner, action_type="dm", object=message)
 
         return redirect('blog:dm_detail', pk=partner.id)
         # return render(request, self.template_name, {
         #     'partner': partner,
         # })
+
+
+def chat_room(request, room_name):
+    print(f'Room name: {room_name}')
+    return render(request, 'demo/dm_chat.html', {
+        'room_name': room_name
+    })
