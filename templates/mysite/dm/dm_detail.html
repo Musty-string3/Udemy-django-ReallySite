@@ -64,8 +64,8 @@
         {% endfor %}
     </ul>
 
-    <form method="post" id="messageForm" enctype='multipart/form-data' class="mt-5">
-        {% csrf_token %}
+    {% comment %} <form method="post" id="messageForm" enctype='multipart/form-data' class="mt-5"> {% endcomment %}
+        {% comment %} {% csrf_token %} {% endcomment %}
         <div class="row">
             <div class="col-md-10 col-12 mx-auto">
                 <div class="row">
@@ -88,7 +88,56 @@
                 </div>
             </div>
         </div>
-    </form>
+    {% comment %} </form> {% endcomment %}
+
+
+
+
+    <div id="chat-log"></div>
+
+    <script>
+        console.log('スタート！！！')
+        const roomName = "{{ room_name }}";  // テンプレートからルーム名を取得
+        console.log(roomName);
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const chatSocket = new WebSocket(
+            wsScheme + '://' + window.location.host + '/ws/dm/' + roomName + '/'
+        );
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            {% comment %} データベースに反映する処理を加える {% endcomment %}
+            document.querySelector('#chat-log').innerHTML += ('<div>' + data.message + '</div>');
+        };
+
+        chatSocket.onclose = function(e) {
+            console.log('エラーが発生。。。')
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#messageText').focus();
+        document.querySelector('#messageText').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // Enterキーが押された時
+                document.querySelector('#submitButton').click();
+                console.log('submitを押下しました。')
+            }
+        };
+
+        document.querySelector('#submitButton').onclick = function(e) {
+            const messageInputDom = document.querySelector('#messageText');
+            const message = messageInputDom.value;
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            messageInputDom.value = '';  // メッセージ送信後に入力フィールドを空にする
+        };
+    </script>
+
+
+
+
+
+
 </div>
 
 <script>

@@ -693,6 +693,7 @@ class DMDetailView(CustomLoginRequiredMixin, View):
         return render(request, self.template_name, {
             'partner': partner,
             "messages_with_time": messages_with_time,
+            'room_name': pk,
         })
 
     def post(self, request, pk, *args, **kwargs):
