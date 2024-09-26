@@ -28,22 +28,26 @@ class TopView(View):
             view_total_count=Count('view_count', distinct=True),
             ).order_by('-like_count')[:4]
 
-        # 決済未完了のorderを取得
-        orders = Order.objects.filter(user=request.user, order_status=0)
-
-        # タプルの内容をflat=Trueでリスト形式に変更
-        purchased_article_ids = orders.values_list('article_id', flat=True)
-
-        # UserItemが存在していたら購入扱いにする
-        user_items = user_item_index(request, request.user, 1)
-        uset_item_ids = user_items.values_list('article_id', flat=True)
-
-        return render(request, self.template_name, {
+        context = {
             'title': 'Really Site',
             'popular_articles': popular_articles,
-            'purchased_article_ids': purchased_article_ids,
-            'uset_item_ids': uset_item_ids,
-        })
+        }
+
+        if request.user.is_authenticated:
+            # 決済未完了のorderを取得
+            orders = Order.objects.filter(user=request.user, order_status=0)
+
+            # タプルの内容をflat=Trueでリスト形式に変更
+            purchased_article_ids = orders.values_list('article_id', flat=True)
+
+            # UserItemが存在していたら購入扱いにする
+            user_items = user_item_index(request, request.user, 1)
+            uset_item_ids = user_items.values_list('article_id', flat=True)
+
+            context['purchased_article_ids'] = purchased_article_ids
+            context['uset_item_ids'] = uset_item_ids
+
+        return render(request, self.template_name, context)
 
 
 class Login(LoginView):
