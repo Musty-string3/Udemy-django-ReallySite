@@ -1,8 +1,18 @@
-{% comment %} メッセージの内容 {% endcomment %}
 {% for message in messages %}
-    <nav class="py-2 {{ message.tags }}">
-        <div class="container text-center p-1">
-            {{ message }}
+<div class="container z-3 position-absolute">
+    <div class="row">
+        <div class="col-lg-6 col-md-8 col-12 m-auto py-2 {{ message.tags }}" id="message">
+            <div class=" text-center p-1">
+                {{ message }}
+            </div>
         </div>
-    </nav>
+    </div>
+</div>
 {% endfor %}
+
+<script>
+    // 10秒後にメッセージを非表示にする関数
+    setTimeout(function() {
+        document.getElementById('message').style.display = 'none';
+    }, 10000); // 3000ミリ秒 = 3秒
+</script>
