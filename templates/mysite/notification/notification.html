@@ -25,16 +25,16 @@
                                             {% elif action.0 == "comment" %}
                                                 <span class="fw-light">コメント</span>
                                                 <input type="hidden" name="action_type" value="comment">
-                                                {% elif action.0 == "like" %}
+                                            {% elif action.0 == "like" %}
                                                 <span class="fw-light">いいね</span>
                                                 <input type="hidden" name="action_type" value="like">
-                                                {% elif action.0 == "follow" %}
+                                            {% elif action.0 == "follow" %}
                                                 <span class="fw-light">フォロー</span>
                                                 <input type="hidden" name="action_type" value="follow">
-                                                {% elif action.0 == "purchase" %}
+                                            {% elif action.0 == "purchase" %}
                                                 <span class="fw-light">購入</span>
                                                 <input type="hidden" name="action_type" value="purchase">
-                                                {% elif action.0 == "dm" %}
+                                            {% elif action.0 == "dm" %}
                                                 <span class="fw-light">DM</span>
                                                 <input type="hidden" name="action_type" value="dm">
                                             {% endif %}

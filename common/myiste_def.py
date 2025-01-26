@@ -147,6 +147,8 @@ def filter_notifications(user, action_type, context):
     elif action_type == "dm":
         context['title'] = '通知一覧（DM）'
         context['notifications'] = Notification.objects.filter(user=user, action_type="dm").order_by('-created_at')
+    else:
+        context['notifications'] = Notification.objects.filter(user=user).order_by('-created_at')
 
     return context
 
