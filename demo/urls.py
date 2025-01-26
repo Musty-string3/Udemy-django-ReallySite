@@ -9,4 +9,5 @@ app_name = 'demo'
 urlpatterns = [
     path('pay/', views.PayView.as_view(), name='pay'),
     path('cache_test/', cache_page(30)(views.CacheTestView.as_view()), name='cache'),
+    path('practice/', views.PracticeView.as_view(), name='practice'),
 ]

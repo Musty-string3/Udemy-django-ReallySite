@@ -57,3 +57,9 @@ class CacheTestView(CustomLoginRequiredMixin, View):
             'time': timezone.now(),
             'name': name,
         })
+
+
+class PracticeView(CustomLoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        template_name = 'demo/practice.html'
+        return render(request, template_name, {})
