@@ -13,19 +13,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-1ul5xe8x8(af%r6n5%3tkeb(y!_bawh39yea!4kw$b#d90$7_@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
-
-if DEBUG:
-    # """開発環境"""
+if os.getenv('GAE_APPLICATION', None):
+    # 本番環境
+    DEBUG = False
+    ALLOWED_HOSTS = ['really-site-434214.dt.r.appspot.com']
+else:
+    # 開発環境
+    DEBUG = True
+    ALLOWED_HOSTS = ['*']
     with open(os.path.join(BASE_DIR, 'secrets', 'secret_dev.yaml')) as file:
         objects = yaml.safe_load(file)
         for object in objects:
             os.environ[object] = objects[object]
-else:
-    # """本番環境"""
-    pass
 
 
 # Application definition
@@ -40,7 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'mysite',
     'blog',
+    'demo',
+    'channels',
 ]
+
+ASGI_APPLICATION = 'config.asgi.application'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -51,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'livereload.middleware.LiveReloadScript',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -69,6 +73,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # どこでも通知のカウントが見れるよう設定する
+                'config.context_processors.notification_count',
             ],
         },
     },
@@ -76,16 +82,39 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.getenv('GAE_APPLICATION', None):
+    # 本番環境
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ['DB_NAME'],
+            'USER': os.environ['DB_USERNAME'],
+            'PASSWORD': os.environ['DB_USERPASS'],
+            'HOST': '/cloudsql/{}'.format(os.environ['DB_CONNECTION']),
+        }
     }
-}
+else:
+    #開発環境
+    # DATABASES = {
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.mysql',
+    #         'NAME': os.environ['DB_NAME'],
+    #         'USER': os.environ['DB_USERNAME'],
+    #         'PASSWORD': os.environ['DB_USERPASS'],
+    #         'HOST': '127.0.0.1',
+    #         'PORT' : '3306',
+    #     }
+    # }
+    # sqlite3の設定
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -106,6 +135,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -123,12 +161,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 
 # ----- static 設定項目
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # ----- static 設定項目
 
@@ -152,11 +195,11 @@ LOGOUT_REDIRECT_URL = '/login/'
 # --------- massage tab with bootstrap alert class ---------------------
 from django.contrib import messages
 MESSAGE_TAGS = {
-    messages.ERROR: 'rounded-0 alert alert-danger',
-    messages.WARNING: 'rounded-0 alert alert-warning',
-    messages.SUCCESS: 'rounded-0 alert alert-success',
-    messages.INFO: 'rounded-0 alert alert-info',
-    messages.DEBUG: 'rounded-0 alert alert-secondary',
+    messages.ERROR: 'rounded-0 alert alert-danger rounded-3',
+    messages.WARNING: 'rounded-0 alert alert-warning rounded-3',
+    messages.SUCCESS: 'rounded-0 alert alert-success rounded-3',
+    messages.INFO: 'rounded-0 alert alert-info rounded-3',
+    messages.DEBUG: 'rounded-0 alert alert-secondary rounded-3',
 }
 # --------- massage tab with bootstrap alert class ---------------------
 
@@ -171,3 +214,12 @@ EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
 EMAIL_OPERATION = os.environ['EMAIL_OPERATION']
 
 # ----------- Gmail設定 --------------
+
+# -----------キャッシュ ----------------
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+    }
+}
+# -----------キャッシュ ----------------

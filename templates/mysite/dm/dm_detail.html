@@ -20,7 +20,7 @@
         </div>
     </div>
 
-    <ul class="col-md-10 col-12 mx-auto list-none pt-3">
+    <ul class="col-md-10 col-12 mx-auto list-none pt-3" id="chat-log">
         {% for message, time_ago in messages_with_time %}
             <li class="mb-4">
             {% if message.sender == partner %}
@@ -64,8 +64,8 @@
         {% endfor %}
     </ul>
 
-    {% comment %} <form method="post" id="messageForm" enctype='multipart/form-data' class="mt-5"> {% endcomment %}
-        {% comment %} {% csrf_token %} {% endcomment %}
+    {% comment %} <form action="{{ request.path }}" method="post" id="messageForm" enctype='multipart/form-data' class="mt-5">
+        {% csrf_token %} {% endcomment %}
         <div class="row">
             <div class="col-md-10 col-12 mx-auto">
                 <div class="row">
@@ -91,18 +91,103 @@
     {% comment %} </form> {% endcomment %}
 
 
-
-
-    <div id="chat-log"></div>
-
-
 </div>
 
+{% comment %} TODO: WebSocketを使って相互通信の処理 {% endcomment %}
+
 <script>
+    window.addEventListener("DOMContentLoaded", () => {
+        console.log('スタート！！！')
+        // テンプレートからデータを取得
+        const roomName = "{{ room_name }}";
+        const partnerId = "{{ partner.id }}";
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const chatSocket = new WebSocket(
+            wsScheme + '://' + window.location.host + '/ws/dm/' + roomName + '/'
+        );
+
+        // WebSocketからメッセージを受信したときの処理
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log(data);
+            // データベースに反映する処理を加える
+
+            const chatList = document.querySelector('#chat-log');
+            const newChat = document.createElement('li');
+            newChat.classList.add("mb-4");
+
+            console.log("WebSocketから正常通知が届きました。");
+            console.log(`送信ユーザー：${data.request_user_id}、パートナー：${partnerId}`);
+
+            if (partnerId == data.request_user_id) {
+                newChat.innerHTML = `
+                    <div class="row justify-content-start">
+                        <div class="col-10 col-md-8">
+                            <a href="/author/${data.partner_data.id}" class="text-decoration-none text-dark">
+                                <span class="mt-2 ms-2">${data.partner_data.username}</span>
+                            </a>
+                            <div class="d-flex mt-1">
+                                <a href="/author/${data.partner_data.id}" class="text-decoration-none text-dark">
+                                    <img src="${data.partner_data.profile_img}" class="me-2 article_profile_image rounded-circle border border-secondary">
+                                </a>
+                                <div class="mt-1 ml-2">
+                                    <div class="bg-info text-dark p-2 rounded flex-wrap">
+                                        ${data.message}
+                                    </div>
+                                    <div class="text-right dm-time-ago">
+                                        たった今
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                console.log("パートナーからの通信です。");
+            } else {
+                newChat.innerHTML = `
+                    <div class="row justify-content-end">
+                        <div class="col-10 col-md-8">
+                            <div class="d-flex justify-content-end">
+                                <div>
+                                    <div class="bg-primary text-white p-2 rounded">
+                                        ${data.message}
+                                    </div>
+                                    <div class="text-left dm-time-ago">
+                                        たった今
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                console.log("自身の通信です。");
+            }
+            chatList.append(newChat);
+        };
+
+        // WebSocketからエラーのメッセージを受信したときの処理
+        chatSocket.onclose = function(e) {
+            console.log('エラーが発生。。。')
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#messageText').focus();
+
+        document.querySelector('#submitButton').addEventListener("click", (e) => {
+            const messageInputDom = document.querySelector('#messageText');
+            chatSocket.send(JSON.stringify({
+                "message": messageInputDom.value,
+                "partner_id": partnerId,
+            }));
+            messageInputDom.value = '';
+        });
+    });
+
     document.addEventListener('DOMContentLoaded', function () {
         const messageText = document.getElementById('messageText');
         const imageInput = document.getElementById('id_image');
         const submitButton = document.getElementById('submitButton');
+        const chatLog = document.getElementById('chat-log');
 
         // ファイル選択トリガー
         document.getElementById('profileImage').addEventListener('click', function() {
@@ -124,49 +209,6 @@
 
         checkInputs();
 
-        console.log('スタート！！！');
-        const roomName = "{{ room_name }}";  // テンプレートからルーム名を取得
-        console.log(roomName);
-        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
-        const chatSocket = new WebSocket(
-            wsScheme + '://' + window.location.host + '/ws/dm/' + roomName + '/'
-        );
-
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-
-            // エラーメッセージがある場合の処理
-            if (data.error) {
-                console.error("Error:", data.error);
-                alert(data.error); // アラートでエラーメッセージを表示
-            } else if (data.message) {
-                // メッセージがある場合の処理
-                document.querySelector('#chat-log').innerHTML += ('<div>' + data.message + '</div>');
-            }
-        };
-
-        chatSocket.onclose = function(e) {
-            console.log('エラーが発生。。。');
-            console.error('Chat socket closed unexpectedly');
-        };
-
-        document.querySelector('#messageText').focus();
-        document.querySelector('#messageText').onkeyup = function(e) {
-            if (e.keyCode === 13) {  // Enterキーが押された時
-                document.querySelector('#submitButton').click();
-                console.log('submitを押下しました。');
-            }
-        };
-
-        document.querySelector('#submitButton').onclick = function(e) {
-            const messageInputDom = document.querySelector('#messageText');
-            const message = messageInputDom.value;
-            chatSocket.send(JSON.stringify({
-                'message': message
-            }));
-            messageInputDom.value = '';  // メッセージ送信後に入力フィールドを空にする
-            checkInputs();
-        };
     });
 </script>
 

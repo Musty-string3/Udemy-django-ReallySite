@@ -9,19 +9,19 @@
                 <span class="ms-4">メッセージ</span>
             </div>
             <ol class="list-group list-group-flush">
-                {% for conversation, created_at in conversation_with_time %}
-                    <a href="{% url 'blog:dm_detail' conversation.user2.id %}"
+                {% for conversation_id, partner, created_at in conversation_with_time %}
+                    <a href="{% url 'blog:dm_detail' conversation_id %}"
                         type="button" class="list-group-item list-group-item-action border border-start-0 border-end-0 border-top-0">
                         <div class="ms-2 me-auto">
                             <div class="fw-bold">
                                 <div class="row mt-1">
                                     <div class="col-lg-1 col-2">
-                                        <img src="{{ conversation.user2.profile.image.url }}" class="article_profile_image rounded-circle border border-secondary">
+                                        <img src="{{ partner.profile.image.url }}" class="article_profile_image rounded-circle border border-secondary">
                                     </div>
                                     <div class="col-lg-11 col-10">
                                         <div class="mb-1">
                                             <p class="fw-light mb-1">
-                                                {{ conversation.user2.profile.username|truncatechars:20 }}
+                                                {{ partner.profile.username|truncatechars:20 }}
                                             </p>
                                             <span class="fw-light opacity-75">{{ conversation.messages.last.text|truncatechars:20 }}</span>
                                         </div>

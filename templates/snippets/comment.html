@@ -1,31 +1,35 @@
 <div class="">
-    <h3 class="h6">コメント</h3>
-    <div class="list-group">
+    <h3 class="h6">コメント一覧<span class="fst-italic mx-2"><small id="commentCount">コメント数:{{ article.comments.count }}</small></span></h3>
+    <ul class="list-group list-group-flush" id="commentList">
         {% for comment, time_ago in comments_with_time %}
-            <div class="list-group-item list-group-item-action p3 rounded-0">
+            <li class="list-group-item list-group-item-action p3 rounded-0" id="commentLi{{ comment.id }}">
                 <p class="m-0">
                     <small>{{ comment.user.profile.username }}</small>
                 </p>
-                <p class="m-0">{{ comment.comment }}</p>
-                <div class="m-0 d-flex">
+                <div class="m-0" id="commentText{{comment.id}}">{{ comment.comment|linebreaks }}</div>
+                <div class="m-0 d-flex py-1">
                     <small>{{ time_ago }}</small>
                     {% if comment.user == request.user %}
-                    <a href="#" class="text-decoration-none text-secondary ms-3">編集する</a>
+                    <a id="commentEdit{{ comment.id }}" class="text-decoration-none text-secondary ms-3">編集する</a>
+                    <a id="commentDelete{{ comment.id }}" class="text-decoration-none text-danger ms-3">削除する</a>
                     {% endif %}
                 </div>
-                {{ comment.tex }}
-            </div>
+            </li>
         {% endfor %}
-    </div>
+    </ul>
     {% if user.is_authenticated %}
-        <form action="{% url 'blog:detail' pk=article.id %}" method="post">
+        <form>
             {% csrf_token %}
-            <div class="mb-2">
-                <label for="comment_textarea">コメント投稿</label>
-                <textarea id="comment_textarea" name="comment" class="rounded-0 bg-light form-control"></textarea>
+            <div class="my-2">
+                <hr>
+                <label id="commentLabel" for="comment_textarea">コメント投稿</label>
+                <div class="form-floating pt-2">
+                    <textarea class="form-control" placeholder="Leave a comment here" id="comment_textarea" name="comment" style="height: 100px"></textarea>
+                    <label for="floatingTextarea2">コメントする</label>
+                </div>
             </div>
             <div class="text-right">
-                <button class="btn btn-sm btn-outline-success" type="submit">
+                <button class="btn btn-sm btn-outline-success" type="button" id="submit" disabled>
                     コメントする
                 </button>
             </div>
@@ -34,3 +38,234 @@
         コメントするには、<a href="{% url 'login' %}">ログイン</a>が必要です。
     {% endif %}
 </div>
+
+<script>
+    window.addEventListener("DOMContentLoaded", () => {
+        const commentTextarea = document.getElementById("comment_textarea");
+        const submit = document.getElementById("submit");
+        const state = {
+            isNewComment: true,
+            editCommentId: "",
+        };
+
+        // コメント投稿フォームの値を評価して送信ボタンを制御する(disabled)
+        ["input", "change"].forEach(eventType => InputCheck(commentTextarea, eventType, submit));
+
+        // コメントの新規投稿と編集
+        submit.addEventListener("click", async function(e) {
+            e.preventDefault();
+            const comment = commentTextarea.value.trim();
+            if (!comment) return;
+
+            try {
+                if (state.isNewComment) {
+                    await handleNewComment(comment, commentTextarea, state);
+                } else {
+                    await handleEditComment(comment, state);
+                }
+            } catch (err) {
+                errorLog(err)
+            }
+            resetForm(commentTextarea, submit, state);
+        });
+
+        // 編集と削除イベントの登録
+        registerCommentEvents(commentTextarea, state);
+
+        // コメント編集のキャンセル
+        document.addEventListener("click", function(e) {
+            if (e.target && e.target.id === "editCancelLink") {
+                resetForm(commentTextarea, submit, state);
+                e.target.remove();
+            }
+        });
+    });
+
+    async function handleNewComment(comment, commentTextarea, state) {
+        const url = "{% url 'blog:comment_new' %}";
+        const requestData = {
+            article_id: "{{ article.id }}",
+            comment: comment,
+        }
+
+        const response = await requestAjax(url, requestData);
+        await commentChangeCheck(response.data, createUi);
+
+        // 動的に作成したコメントのイベント登録
+        registerCommentEvents(commentTextarea, state);
+
+        console.log("コメント新規投稿非同期成功");
+    }
+
+    async function handleEditComment(comment, state) {
+        url = `/blog/comment/${state.editCommentId}/edit/`;
+        requestData = {
+            "comment_id": state.editCommentId,
+            "comment": comment,
+        }
+
+        const response = await requestAjax(url, requestData);
+        await commentChangeCheck(response.data);
+
+        const targetComment = document.getElementById(`commentText${state.editCommentId}`);
+        targetComment.innerHTML = response.data.comment_text.replace(/\n/g, "<br>");
+        console.log("コメント編集の非同期成功");
+    }
+
+    function resetForm(commentTextarea, submit, state) {
+        commentTextarea.value = "";
+        submit.disabled = true;
+        state.isNewComment = true;
+        state.editCommentId = "";
+        document.getElementById("commentLabel").textContent = "コメント投稿";
+    }
+
+    function registerCommentEvents(commentTextarea, state) {
+        const commentEditButtons = document.querySelectorAll("[id^='commentEdit']");
+        const commentDeleteButtons = document.querySelectorAll("[id^='commentDelete']");
+
+        // コメントの編集非同期
+        commentEditButtons.forEach(commentEditButton => registerEditEvent(commentEditButton, commentTextarea, state));
+
+        // コメントの削除非同期
+        commentDeleteButtons.forEach(commentEditButton => registerDeleteEvent(commentEditButton));
+    }
+
+    function commentCancelLink(commentLabel) {
+        const editCancel = document.createElement("a");
+        editCancel.id = "editCancelLink";
+        editCancel.textContent = "編集をキャンセル";
+        editCancel.classList.add("mx-2", "btn", "btn-outline-danger", "cancel_btn");
+        commentLabel.append(editCancel);
+        return
+    }
+
+    function InputCheck(commentTextarea, eventType, submit) {
+        commentTextarea.addEventListener(eventType, function(e) {
+            toggleSubmit(commentTextarea, submit);
+        });
+    }
+
+    function toggleSubmit(commentTextarea, submit) {
+        submit.disabled = commentTextarea.value.trim() === "";
+    }
+
+    async function commentChangeCheck(response, changeUi=null, commentId=null) {
+        if (response.message === "success") {
+            if (changeUi === createUi) {
+                await changeUi(response);
+            } else if (changeUi === deleteUi) {
+                await changeUi(response, commentId);
+            } else {
+                return
+            }
+            const commentNewCount = document.getElementById("commentCount");
+            commentNewCount.textContent = "コメント数:" + response.comment_count;
+        } else {
+            throw new Error(response)
+        }
+    }
+
+    function createUi(response) {
+        const commentList = document.getElementById("commentList");
+        const newComment = document.createElement("li");
+        newComment.classList.add("list-group-item", "list-group-item-action", "p3", "rounded-0");
+        newComment.id = "commentLi" + response.comment.id;
+        newComment.innerHTML = `
+            <p class="m-0">
+                <small>${response.username}</small>
+            </p>
+            <div class="m-0" id="commentText${response.comment.id}">
+                <p>${response.comment.comment.replace(/\n/g, "<br>")}</p>
+            </div>
+            <div class="m-0 d-flex py-1">
+                <small>${response.comment_create_time}</small>
+                <a id="commentEdit${response.comment.id}" class="text-decoration-none text-secondary ms-3">編集する</a>
+                <a id="commentDelete${response.comment.id}" class="text-decoration-none text-danger ms-3">削除する</a>
+            </div>
+        `;
+        commentList.append(newComment);
+    }
+
+    function deleteUi(response, commentId) {
+        const commentElement = document.getElementById(`commentLi${commentId}`);
+        if (commentElement) commentElement.remove();
+    }
+
+    function registerDeleteEvent(deleteButton) {
+        deleteButton.addEventListener("click", async function(e) {
+            e.preventDefault();
+
+            // 同期処理のため、「[Violation] 'click' handler took」の警告が出るので非推奨
+            if (!confirm("コメントを削除しますか？")) return;
+
+            const commentId = deleteButton.id.replace("commentDelete", "");
+            url = `/blog/comment/${commentId}/delete/`;
+            requestData = {
+                "comment_id": commentId,
+            }
+
+            const response = await requestAjax(url, requestData);
+            commentChangeCheck(response.data, deleteUi, commentId);
+            console.log("コメント削除非同期成功");
+        });
+    };
+
+    function registerEditEvent(commentEditButton, commentTextarea, state) {
+        commentEditButton.addEventListener("click", () => {
+            commentTextarea.scrollIntoView({ behavior: "smooth", block: "start" });
+            const commentLabel = document.getElementById("commentLabel");
+            commentLabel.textContent = "コメントの編集";
+
+            // キャンセルボタンの作成（重複生成を防止）
+            if (!document.getElementById("editCancelLink")) {
+                commentCancelLink(commentLabel);
+            }
+
+            const commentId = commentEditButton.id.replace("commentEdit", "");
+            const commentText = document.getElementById(`commentText${commentId}`).innerHTML.trim().replace(/<\/?p>/g, "").replace(/<br>/g, "\n");
+            commentTextarea.value = commentText;
+
+            state.isNewComment = false;
+            state.editCommentId = commentId;
+        });
+    }
+
+    // AjaxでAPIに向けて処理を投げる
+    async function requestAjax(url, data) {
+        const csrfToken = getCookie("csrftoken");
+        try {
+            const response = await axios.post(url, data, {
+                headers: {
+                    "X-CSRFToken": csrfToken,
+                }
+            })
+            return response;
+        } catch (err) {
+            throw new Error("Ajaxリクエスト中にエラー:", err)
+        }
+    }
+
+    function errorLog(err) {
+        if (err.response) {
+            console.log(`サーバー側でのエラーです。エラー内容:${err}`);
+        } else if (err.request) {
+            console.log(`リクエストが完了しませんでした。エラー内容:${err}`);
+        } else {
+            console.log(`予期しないエラー。エラー内容:${err}`);
+        }
+        return
+    }
+
+    function getCookie(name) {
+        if (document.cookie && document.cookie != "") {
+            for (var cookie of document.cookie.split(';')) {
+                var [key, value] = cookie.trim().split("=");
+                if (key == name) {
+                    return decodeURIComponent(value);
+                }
+            }
+        }
+    }
+
+</script>

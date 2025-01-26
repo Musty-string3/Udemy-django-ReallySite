@@ -25,13 +25,18 @@
                         {% endif %}
                     </form>
                 </div>
-                <a class="p-2 h5 link-secondary" href="{% url 'blog:dm_detail' user.id %}">
-                    {% if dm_exitst %}
+                {% if dm_room %}
+                <a class="p-2 h5 link-secondary" href="{% url 'blog:dm_detail' dm_room.id %}">
                     <i class="bi bi-envelope"></i>
-                    {% else %}
-                    <i class="bi bi-envelope-plus"></i>
-                    {% endif %}
                 </a>
+                {% else %}
+                <form action="{% url 'blog:dm_create' user.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link p-0" style="border: none; background: none;">
+                        <i class="bi bi-envelope-plus text-dark"></i>
+                    </button>
+                </form>
+                {% endif %}
             </div>
 
             <hr>

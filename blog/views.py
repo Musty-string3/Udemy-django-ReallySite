@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.views import View
 from django.db.models import Count, Sum
 from django.db.models import Q
+from django.forms.models import model_to_dict
 
 # 非同期処理
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -333,10 +334,88 @@ class ArticleLikeView(CustomLoginRequiredMixin, View):
 ##  非同期コメント
 ################
 
-# class CommentNewView(CustomLoginRequiredMixin, View):
-#     def post(self, request, pk, *args, **kwargs):
+class CommentNewView(CustomLoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        context = {"message": "error"}
 
-#         return JsonResponse(context)
+        try:
+            data = json.loads(request.body)
+            article_id = data.get("article_id")
+            comment = data.get("comment")
+            article = Article.objects.get(pk=article_id)
+        except json.JSONDecodeError as e:
+            return JsonResponse({"message": "error", "details": "Invalid JSON"}, status=400)
+        except Article.DoesNotExist:
+            return JsonResponse({"message": "error", "details": "Article not found"}, status=404)
+
+        comment_form = CommentForm(data)
+        if comment_form.is_valid():
+            comment = comment_form.save(commit=False)
+            comment.user = request.user
+            comment.article = article
+            comment.save()
+            # 通知を飛ばす
+            notification_create(
+                request.user,
+                receive_user=article.comments.all(),
+                action_type="comment",
+                object=comment,
+                article=article
+            )
+            context = {
+                "message": "success",
+                "comment": model_to_dict(comment), ## 自動的に辞書形式に変換
+                "username": comment.user.profile.username,
+                "comment_create_time": days_ago_comment(comment.created_at),
+                "comment_count": article.comments.count(),
+            }
+            return JsonResponse(context)
+
+        ## コメント作成時にエラーの場合
+        context["details"] = "Invalid form data"
+        context["errors"] = comment_form.errors
+        return JsonResponse(context, status=400)
+
+
+
+class CommentEditView(CustomLoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            print(data)
+            comment_id = data.get("comment_id")
+            comment = Comment.objects.get(id=comment_id)
+        except json.JSONDecodeError as e:
+            return JsonResponse({"message": "error", "details": "Invalid JSON"}, status=400)
+        except Comment.DoesNotExist:
+            return JsonResponse({"message": "error", "details": "Comment not found"}, status=404)
+
+        form = CommentForm(data, instance=comment)
+        if form.is_valid():
+            comment = form.save()
+            print(comment.comment)
+            return JsonResponse({"message": "success", "comment_id": comment.id, "comment_text": comment.comment}, status=200)
+
+        return JsonResponse({"message": "error", "details": "Invalid form data", "errors": form.errors}, status=400)
+
+
+
+class CommentDeleteView(CustomLoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            comment_id = data.get("comment_id")
+            comment = Comment.objects.get(id=comment_id)
+            comment_count = comment.article.comments.count()
+            comment.delete()
+        except json.JSONDecodeError as e:
+            return JsonResponse({"message": "error", "details": "Invalid JSON"}, status=400)
+        except Comment.DoesNotExist:
+            return JsonResponse({"message": "error", "details": "Comment not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"message": "error", "details": "予期しないエラーが発生しました", "error_message": e}, status=500)
+
+        return JsonResponse({"message": "success", "comment_count": comment_count - 1}, status=200)
 
 
 ################
@@ -649,37 +728,56 @@ class DMIndexView(CustomLoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
 
-        conversations = Conversation.objects.filter(user1=request.user)
-        conversation_with_time = [
-            (conversation, days_ago_comment(last_message.created_at))
-            for conversation in conversations
-            if (last_message := conversation.messages.last())
-        ]
+        conversations = Conversation.objects.select_related('user1', 'user2').filter(Q(user1=request.user) | Q(user2=request.user))
+        conversation_with_time = []
+        for conversation in conversations:
+            if (last_message := conversation.messages.last()):
+                partner = conversation.user2 if conversation.user1 == request.user else conversation.user1
+                time_ago = days_ago_comment(last_message.created_at)
+                conversation_with_time.append((conversation.id, partner, time_ago))
+
 
         return render(request, self.template_name, {
             "conversation_with_time": conversation_with_time,
         })
 
-class DMDetailView(CustomLoginRequiredMixin, View):
-    template_name = 'mysite/dm/dm_detail.html'
 
-    def get(self, request, pk, *args, **kwargs):
-
+class DMCreateView(CustomLoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
         try:
             partner = get_user_model().objects.get(pk=pk)
         except get_user_model().DoesNotExist:
             messages.error(request, '存在しないユーザーにアクセスしました。')
             return redirect('/')
 
-        # ユーザールームが存在したら取得し、存在しなかったら作成する
-        dm_room = Conversation.objects.filter(user1=request.user, user2=partner).first()
-        if not dm_room and request.user != partner:
+        dm_room = Conversation.objects.filter(
+                Q(user1=request.user, user2=partner) | Q(user1=partner, user2=request.user)
+            ).first()
+
+        if not dm_room:
             dm_room = Conversation.objects.create(user1=request.user, user2=partner)
-        elif dm_room:
-            pass
-        else:
-            messages.error(request, '異常が発生しました。')
-            return redirect('blog:dm_detail', pk=partner.id)
+
+        return redirect('blog:dm_detail', dm_room.id)
+
+
+class DMDetailView(CustomLoginRequiredMixin, View):
+    template_name = 'mysite/dm/dm_detail.html'
+    User = get_user_model()
+
+    def get(self, request, pk, *args, **kwargs):
+
+        try:
+            dm_room = Conversation.objects.get(pk=pk)
+            if dm_room.user1 == request.user:
+                partner = self.User.objects.get(pk=dm_room.user2.id)
+            else:
+                partner = self.User.objects.get(pk=dm_room.user1.id)
+        except Conversation.DoesNotExist:
+            messages.error(request, '存在しないルームにアクセスしました。')
+            return redirect('/')
+        except self.User.DoesNotExist:
+            messages.error(request, '指定したユーザーが存在しません。')
+            return redirect('/')
 
         # 既読をつける
         partner_send_messages = Message.objects.filter(conversation=dm_room, sender=partner, is_read=False)
@@ -697,37 +795,38 @@ class DMDetailView(CustomLoginRequiredMixin, View):
         })
 
     def post(self, request, pk, *args, **kwargs):
-
-        try:
-            partner = get_user_model().objects.get(pk=pk)
-        except get_user_model().DoesNotExist:
-            messages.error(request, '存在しないユーザーにアクセスしました。')
-            return redirect('/')
-
         text = request.POST.get('text', None)
         image = request.FILES.get('image', None)
 
         if not text and not image:
             messages.error(request, 'メッセージの送信に失敗しました。')
-            return redirect('blog:dm_detail', pk=request.user.id)
+            return redirect('blog:dm_detail', pk=dm_room.id)
+
+        try:
+            dm_room = Conversation.objects.get(pk=pk)
+        except Conversation.DoesNotExist:
+            messages.error(request, '存在しないルームにアクセスしました。')
+            return redirect('/')
+
+        if dm_room.user1 == request.user:
+                partner = self.User.objects.get(pk=dm_room.user2.id)
         else:
-            dm_room = Conversation.objects.filter(
-                Q(user1=request.user, user2=partner) | Q(user1=partner, user2=request.user)
-            ).first()
-            form = DMForm(request.POST)
-            if form.is_valid():
-                message = form.save(commit=False)
-                message.conversation = dm_room
-                message.sender = request.user
-                message.save()
+            partner = self.User.objects.get(pk=dm_room.user1.id)
+
+        dm_room = Conversation.objects.filter(
+            Q(user1=request.user, user2=partner) | Q(user1=partner, user2=request.user)
+        ).first()
+        form = DMForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.conversation = dm_room
+            message.sender = request.user
+            message.save()
 
         # DM時に通知を飛ばす
         notification_create(request.user, receive_user=partner, action_type="dm", object=message)
 
-        return redirect('blog:dm_detail', pk=partner.id)
-        # return render(request, self.template_name, {
-        #     'partner': partner,
-        # })
+        return redirect('blog:dm_detail', pk=dm_room.id)
 
 
 def chat_room(request, room_name):
