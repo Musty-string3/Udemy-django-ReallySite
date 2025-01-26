@@ -13,6 +13,8 @@
 <script>
     // 10秒後にメッセージを非表示にする関数
     setTimeout(function() {
-        document.getElementById('message').style.display = 'none';
-    }, 10000); // 3000ミリ秒 = 3秒
+        try {
+            document.getElementById('message').style.display = 'none';
+        } catch (e) {}
+    }, 1000); // 10000ミリ秒 = 10秒
 </script>

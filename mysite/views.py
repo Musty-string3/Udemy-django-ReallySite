@@ -152,9 +152,8 @@ class AuthorView(CustomLoginRequiredMixin, View):
 
     def get(self, request, pk, *args, **kwargs):
         try:
-            User = get_user_model()
-            user = User.objects.get(pk=pk)
-        except User.DoesNotExist:
+            user = get_user_model().objects.get(pk=pk)
+        except get_user_model().DoesNotExist:
             messages.error(request, '存在しないユーザーです。')
             return redirect('/')
 
@@ -162,7 +161,7 @@ class AuthorView(CustomLoginRequiredMixin, View):
         if request.user == user:
             return redirect('mypage')
 
-        public_artiles = Article.objects.filter(author=request.user, is_public=True).annotate(
+        public_artiles = Article.objects.filter(author=user, is_public=True).annotate(
             like_count=Count('article_like'),
             comment_count=Count('comments'),
             view_total_count=Count('view_count'),
@@ -178,9 +177,9 @@ class AuthorView(CustomLoginRequiredMixin, View):
         # followed_byはUserモデルに適用される（逆参照）
         followed_count = user.followed_by.all().count()
 
-        dm_exitst = Conversation.objects.filter(
+        dm_room = Conversation.objects.filter(
                 Q(user1=request.user, user2=user) | Q(user1=user, user2=request.user)
-            ).exists()
+            ).first()
 
         return render(request, self.template_name, {
             'user': user,
@@ -188,7 +187,7 @@ class AuthorView(CustomLoginRequiredMixin, View):
             'follow': follow,
             'follows_count': follows_count,
             'followed_count': followed_count,
-            'dm_exitst': dm_exitst,
+            'dm_room': dm_room,
         })
 
 
