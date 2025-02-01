@@ -4,6 +4,8 @@ from . import views
 app_name = 'blog'
 urlpatterns = [
     path('index/', views.ArticleIndexView.as_view(), name='index'),
+    ## 記事の無限スクロール
+    path('api/articles/', views.ArticleListApiView.as_view(), name='article_list_api'),
     path('new/', views.ArticleNewView.as_view(), name='new'),
     path('<int:pk>/', views.ArticleDetailView.as_view(), name='detail'),
     path('<int:pk>/edit/', views.ArticleEditView.as_view(), name='edit'),

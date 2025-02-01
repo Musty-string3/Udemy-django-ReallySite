@@ -9,20 +9,109 @@
                 {{ page_title }}
             </h3>
 
-            <div class="card-deck row row-cols-1 row-cols-md-2 g-4">
-                {% for article in paginator_articles %}
-                <div class="col-lg-6 col">
-                    {% include "snippets/articles_index.html" %}
+            <div class="card-deck row row-cols-1 row-cols-md-2 g-4" id="article-list">
+                {% include "snippets/articles_index.html" %}
+                <div class="text-center d-none" id="limit-data">
+                    表示できるデータはありません。
                 </div>
-                {% endfor %}
             </div>
 
             {% comment %} ページネーション {% endcomment %}
-            {% include "snippets/pagination.html" %}
+            {% comment %} {% include "snippets/pagination.html" %} {% endcomment %}
         </div>
         {% comment %} サイドバー {% endcomment %}
         {% include "snippets/sideber.html" %}
     </div>
+    {% comment %} Ajaxで無限スクロール中であればスピナーを表示する {% endcomment %}
+    <div class="pt-5 d-flex justify-content-center d-none" id="spinner">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
 </main>
 
+<script>
+    window.addEventListener("DOMContentLoaded", function() {
+        const status = {
+            isLoading: false,
+            offset: 10,
+            isLimit: false,
+        }
+
+        window.addEventListener('scroll', function() {
+            if (status.isLoading || status.isLimit) return
+            // ページ全体の高さ
+            const documentHeight = document.documentElement.scrollHeight;
+
+            // 現在のスクロール位置 + 画面の高さ
+            const scrollPosition = window.scrollY + window.innerHeight;
+
+            // スクロール位置がページの最下部に到達したか確認
+            if (scrollPosition >= documentHeight - 100) {
+                // 二重リクエスト発生の防止
+                status.isLoading = true;
+                getArticles(status);
+            }
+        });
+    });
+
+    async function getArticles(status) {
+        toggleSpinner(true);
+
+        const url = "{% url 'blog:article_list_api' %}";
+        const requestData = {
+            offset: status.offset,
+        }
+
+        try {
+            const response = await requestAjax(url, requestData);
+            if (response.data.message === "success") {
+                // 全ての記事を取得し終え、表示できるものがなくなった時の処理
+                if (response.data.limit === true) {
+                    const limitData = document.getElementById("limit-data");
+                    limitData.classList.remove("d-none");
+                    limitData.classList.add("d-block");
+                    toggleSpinner(false);
+                    status.isLimit = true;
+                    return;
+                }
+
+                const newHtml = response.data.include_articles_html;
+                const articleList = document.getElementById("article-list");
+                articleList.insertAdjacentHTML("beforeend", newHtml);
+                status.offset += 10;
+            } else {
+                throw new Error(response)
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            toggleSpinner(false);
+            status.isLoading = false;
+        }
+    }
+
+    // AjaxでAPIに向けて処理を投げる
+    async function requestAjax(url, data) {
+        try {
+            const response = await axios.get(url, {params: data})
+            return response;
+        } catch (err) {
+            console.error("Ajaxリクエスト中にエラー:", err);
+            throw new Error(err);
+        }
+    }
+
+    function toggleSpinner(isDisplay) {
+        const spinner = document.getElementById("spinner");
+        if (isDisplay) {
+            spinner.classList.remove("d-none");
+            spinner.classList.add("d-block");
+        } else {
+            spinner.classList.remove("d-block");
+            spinner.classList.add("d-none");
+        }
+    }
+
+</script>
 {% endblock %}

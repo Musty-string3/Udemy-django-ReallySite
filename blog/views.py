@@ -10,6 +10,7 @@ from django.views import View
 from django.db.models import Count, Sum
 from django.db.models import Q
 from django.forms.models import model_to_dict
+from django.template.loader import render_to_string
 
 # 非同期処理
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -49,15 +50,70 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
 
         # UserItemが存在していたら購入扱いにする
         user_items = user_item_index(request, request.user, 1)
-        uset_item_ids = user_items.values_list('article_id', flat=True)
+        user_item_ids = user_items.values_list('article_id', flat=True)
 
         return render(request, self.template_name, {
             'page_title': 'ブログ一覧画面',
             'paginator_articles': paginator,
             'page_number': page_number,
             'purchased_article_ids': purchased_article_ids,
-            'uset_item_ids': uset_item_ids,
+            'user_item_ids': user_item_ids,
         })
+
+
+################
+##  記事の無限スクロール
+################
+class ArticleListApiView(CustomLoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        print("リクエストが届きました。")
+
+        ## Ajaxで送られてくるデータの取得
+        print(f"request.GET => {request.GET}")
+        try:
+            request_data = request.GET
+            offset = int(request_data.get('offset'))
+        except json.JSONDecodeError:
+            return JsonResponse({"message": "error", "details": "Invalid JSON"}, status=400)
+
+        ## 無限スクロールでは10ページごとを更新していく
+        articles = Article.objects.filter(is_public=True).annotate(
+            # ! distinct=Trueで重複を避ける
+            like_count=Count('article_like', distinct=True),
+            comment_count=Count('comments', distinct=True),
+            view_total_count=Count('view_count', distinct=True),
+        ).order_by('-created_at')[offset:offset+10]
+
+        ## 無限スクロールで全て表示している場合
+        if not articles:
+            return JsonResponse({
+            "message": "success",
+            "limit": True,
+        }, status=200)
+
+        # 決済未完了のorderを取得
+        orders = Order.objects.filter(user=request.user, order_status=0)
+
+        # タプルの内容をflat=Trueでリスト形式に変更
+        purchased_article_ids = orders.values_list('article_id', flat=True)
+
+        # UserItemが存在していたら購入扱いにする
+        user_items = user_item_index(request, request.user, 1)
+        user_item_ids = user_items.values_list('article_id', flat=True)
+
+        ## HTMLをサーバー側でレンダリング
+        include_articles_html = render_to_string("snippets/articles_index.html",
+            {
+                "paginator_articles": articles,
+                "purchased_article_ids": purchased_article_ids,
+                "user_item_ids": user_item_ids,
+            }
+        )
+
+        return JsonResponse({
+            "message": "success",
+            "include_articles_html": include_articles_html,
+        }, status=200)
 
 
 
@@ -106,7 +162,12 @@ class ArticleDetailView(CustomLoginRequiredMixin, View):
     template_name = 'mysite/blog/article.html'
 
     def get(self, request, pk, *args, **kwargs):
-        article = Article.objects.get(pk=pk)
+        try:
+            article = Article.objects.get(pk=pk)
+        except Article.DoesNotExist:
+            messages.error(request, '指定された記事は存在しません。')
+            return redirect('blog:index')
+
         comments = Comment.objects.filter(article=article)
         comments_with_time = [(comment, days_ago_comment(comment.created_at)) for comment in comments]
         like_count = ArticleLike.objects.filter(article=article).count()
@@ -629,7 +690,7 @@ class ArticlePurchaseView(CustomLoginRequiredMixin, View):
                     action_type="purchase",
                     article=article
                 )
-            print('UsetItem、Notificationの作成完了')
+            print('UserItem、Notificationの作成完了')
 
             # 購入通知（メール）を飛ばす
             subject = "【購入メール】商品の購入をありがとうございます。"
