@@ -2,6 +2,7 @@ import os
 import json
 import payjp
 import random
+import redis
 
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
@@ -15,6 +16,8 @@ from django.template.loader import render_to_string
 # 非同期処理
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
+
+import redis.connection
 
 from .models import *
 from mysite.models.profile_models import Profile
@@ -31,6 +34,30 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
     template_name = 'mysite/blog/blogs.html'
 
     def get(self, request, *args, **kwargs):
+        key_string = "users"
+
+        ## キャッシュを使用する場合
+        try:
+            redis_pool = redis.ConnectionPool(host=os.environ['REDIS_HOST'], port=6379, db=0, decode_responses=True)
+            redis_client = redis.Redis(connection_pool=redis_pool)
+
+            ## redisにキャッシュが保存されていれば取得する
+            item = get_json_cache(redis_client, key_string)
+
+            if item:
+                print("redisからのキャッシュを使用します。")
+                return render(request, self.template_name, {
+                    'page_title': 'ブログ一覧画面',
+                    'has_cache':  "True",
+                    'paginator_articles': item["articles"],
+                    'purchased_article_ids': item["purchased_article_ids"],
+                    'user_item_ids': item["user_item_ids"],
+                })
+        except Exception as e:
+            print(f"キャッシュの使用失敗。エラー内容:{e}")
+            pass
+
+        ## キャッシュを使用しない場合
         page_number = request.GET.get('page')
 
         articles = Article.objects.filter(is_public=True).annotate(
@@ -38,9 +65,9 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
             like_count=Count('article_like', distinct=True),
             comment_count=Count('comments', distinct=True),
             view_total_count=Count('view_count', distinct=True),
-        ).order_by('-created_at')
+        ).order_by('-created_at')[:10]
         # 1ページの記事の表示を変更
-        paginator = Paginator(articles, 20).get_page(page_number)
+        # paginator = Paginator(articles, 10).get_page(page_number)
 
         # 決済未完了のorderを取得
         orders = Order.objects.filter(user=request.user, order_status=0)
@@ -52,9 +79,21 @@ class ArticleIndexView(CustomLoginRequiredMixin, View):
         user_items = user_item_index(request, request.user, 1)
         user_item_ids = user_items.values_list('article_id', flat=True)
 
+        ## redis.Connectionを直接使う（djangoで用意されている「from django.core.cache import cache」ではない）
+
+        ## Redisでのキャッシュ保存処理
+        item = article_set_item(articles, purchased_article_ids, user_item_ids)
+
+        try:
+            redis_client.set(key_string, json.dumps(item, default=str, ensure_ascii=False), ex=300)
+        except Exception as e:
+            print(f"キャッシュ保存時にエラー発生：{e}")
+            pass
+
+
         return render(request, self.template_name, {
             'page_title': 'ブログ一覧画面',
-            'paginator_articles': paginator,
+            'paginator_articles': articles,
             'page_number': page_number,
             'purchased_article_ids': purchased_article_ids,
             'user_item_ids': user_item_ids,
@@ -73,7 +112,7 @@ class ArticleListApiView(CustomLoginRequiredMixin, View):
         try:
             request_data = request.GET
             offset = int(request_data.get('offset'))
-        except json.JSONDecodeError:
+        except Exception:
             return JsonResponse({"message": "error", "details": "Invalid JSON"}, status=400)
 
         ## 無限スクロールでは10ページごとを更新していく

@@ -2,22 +2,39 @@
     <div class="col-lg-6 col">
         <div class="card h-100" id="article-card-{{ article.id }}">
             {% if article.sell_flag and article.price != 0 and not article.author == request.user and not article.id in user_item_ids %}
-                <a data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
+                <a data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.id }}">
             {% else %}
-            <a href="{% url 'blog:detail' article.id %}">
+                <a href="{% url 'blog:detail' article.id %}">
             {% endif %}
                 <div id="carouselIndicators{{ article.id }}" class="carousel slide" data-bs-ride="carousel">
                     <div class="carousel-indicators">
-                        {% for / in article.image.all %}
-                        <button type="button" data-bs-target="#carouselIndicators{{ article.id }}" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}" aria-current="{% if forloop.first %}true{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
-                        {% endfor %}
+                        {% if has_cache == "True" %}
+                            {% for _ in article.image %}
+                                <button type="button" data-bs-target="#carouselIndicators{{ article.id }}" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}" aria-current="{% if forloop.first %}true{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
+                            {% endfor %}
+
+                        {% else %}
+                            {% for / in article.image.all %}
+                                <button type="button" data-bs-target="#carouselIndicators{{ article.id }}" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}" aria-current="{% if forloop.first %}true{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                     <div class="carousel-inner">
-                        {% for image in article.image.all %}
-                        <div class="carousel-item {% if forloop.first %}active{% endif %}" data-bs-interval="10000000000">
-                            <img src="{{ image.image.url }}" class="d-block w-100 article_image img-thumbnail">
-                        </div>
-                        {% endfor %}
+                        {% if has_cache == "True" %}
+                            {{ article.image|length }}
+                            {% for image in article.image %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}" data-bs-interval="10000000000">
+                                    <img src="{{ image.url }}" class="d-block w-100 article_image img-thumbnail">
+                                </div>
+                            {% endfor %}
+
+                        {% else %}
+                            {% for image in article.image.all %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}" data-bs-interval="10000000000">
+                                    <img src="{{ image.image.url }}" class="d-block w-100 article_image img-thumbnail">
+                                </div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                     <button class="carousel-control-prev" type="button" data-bs-target="#carouselIndicators{{ article.id }}" data-bs-slide="prev">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -30,14 +47,25 @@
                 </div>
                 <div class="card-body">
                     <a href="{% url 'author' pk=article.author.id %}" class="text-decoration-none text-dark">
-                        <img src="{{ article.author.profile.image.url }}" alt="" class="col-2 article_profile_image rounded-circle border border-secondary">
-                        {{ article.author.profile.username }}
-                        <span class="text-danger"></span>
-                        <span class="small text-muted">
-                            {% if request.user == article.author %}
-                            (あなた)
-                            {% endif %}
-                        </span>
+                        {% if has_cache == "True" %}
+                            <img src="{{ article.author.profile_image }}" alt="" class="col-2 article_profile_image rounded-circle border border-secondary">
+                            {{ article.author.username }}
+                            <span class="text-danger"></span>
+                            <span class="small text-muted">
+                                {% if request.user.id == article.author.id %}
+                                (あなた)
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            <img src="{{ article.author.profile.image.url }}" alt="" class="col-2 article_profile_image rounded-circle border border-secondary">
+                            {{ article.author.profile.username }}
+                            <span class="text-danger"></span>
+                            <span class="small text-muted">
+                                {% if request.user == article.author %}
+                                (あなた)
+                                {% endif %}
+                            </span>
+                        {% endif %}
                     </a>
                     <h5 class="card-title mt-3">{{ article.title }}</h5>
                     <p class="card-text">{{ article.text|truncatechars:30 }}</p>
@@ -59,11 +87,11 @@
                     </div>
                     {% if article.sell_flag and article.price != 0 and not article.author == request.user and not article.id in user_item_ids %}
                         {% if article.id in purchased_article_ids %}
-                        <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
+                        <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.id }}">
                             カートから外す
                         </button>
                         {% else %}
-                        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.pk }}">
+                        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#purchaseModal{{ article.id }}">
                             カートにいれる
                         </button>
                         {% endif %}

@@ -1,9 +1,15 @@
+import redis
+import json
+import pprint
+
 from django.utils import timezone
 from datetime import timedelta
 from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.mail import send_mail
+
+from datetime import datetime, timezone, timedelta
 
 
 from blog.models import *
@@ -194,3 +200,75 @@ def create_email(subject, name, email, contact=False, articles=False, price=Fals
         return "送信完了"
     except Exception as e:
         return f'メールの送信に失敗しました。エラーコード{e}'
+
+
+## JSの文字列を一旦datetimeに変換して日本時間にした後にフォーマットをyyyy年mm月dd日hh-mmに変換する
+def time_at_str(time_at):
+    # 文字列を datetime に変換
+    created_at_dt = datetime.fromisoformat(time_at).replace(tzinfo=timezone.utc)
+
+    # JST (日本時間) に変換
+    jst_time = created_at_dt.astimezone(timezone(timedelta(hours=9)))
+
+    # フォーマット
+    formatted_date = jst_time.strftime("%Y年%-m月%-d日%H:%M")
+
+    return formatted_date
+
+## キャッシュをredisに保存する
+def article_set_item(articles, purchased_article_ids, user_item_ids):
+    """ 記事をjsonに変換する """
+
+    print("redisでのキャッシュを保存する\n")
+    item = {}
+
+    item["articles"] = []
+    for article in articles:
+        article_dict = {
+            "id":               article.id,
+            "title":            article.title,
+            "text":             article.text,
+            "image": [
+                {
+                    "id": img["id"],
+                    "url": "/media/" + img["image"],
+                }
+                for img in article.image.values("id", "image")
+            ],
+            "created_at":       time_at_str(article.created_at.isoformat()),  ## JSONでシリアライズしないとエラーになってしまうため、isoformatを使用
+            "updated_at":       time_at_str(article.updated_at.isoformat()),
+            "like_count":       article.like_count,
+            "comment_count":    article.comment_count,
+            "view_total_count": article.view_total_count,
+            "sell_flag":        article.sell_flag,
+            "price":            article.price,
+            "is_public":        article.is_public,
+            "author": {
+                "id":       getattr(article.author, "id"),
+                "username": getattr(article.author.profile, "username"),
+                "profile_image":    getattr(article.author.profile.image, "url"),
+            },
+        }
+        item["articles"].append(article_dict)
+
+    item["purchased_article_ids"] = list(purchased_article_ids)
+    item["user_item_ids"] = list(user_item_ids)
+
+    return item
+
+
+## redisにキャッシュが保存されていれば取得する
+def get_json_cache(redis_client, key):
+    ## JSONを取得し、辞書に戻す
+    try:
+        retrieved_data = redis_client.get(key)
+        if retrieved_data and redis_client.ping():
+            return json.loads(retrieved_data)
+        else:
+            print("キャッシュ不使用")
+    except TypeError:
+        print("redisの有効期限切れ")
+    except Exception as e:
+        print(f"不明なエラー。エラー内容：{e}")
+
+    return False
