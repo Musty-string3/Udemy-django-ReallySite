@@ -18,7 +18,7 @@ class Command(BaseCommand):
         parser.add_argument("count", type=int, help="1ユーザーにつき作成する記事の数")
 
     def handle(self, *args, **options):
-        base_path = "/Users/miedashuya/Desktop/practice/REALLYSITE/media/article/images"
+        base_path = os.environ['BASE_PATH']
 
         all_files_name = []
         all_existing_files = []
